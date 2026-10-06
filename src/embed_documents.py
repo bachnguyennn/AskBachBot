@@ -14,36 +14,12 @@ embeddings = model.encode(texts, show_progress_bar=True, convert_to_numpy=True)
 
 assert len(chunks) == len(embeddings)
 
-queries = [
-    "What Azure experience does Bach have?",
-    "What computer vision research has Bach done?",
-    "What did Bach do at CMHA?"
-]
-
-
 def retrieve_top_k_documents(query, embeddings, chunks, k=3):
     query_embedding = model.encode([query], convert_to_numpy=True)[0]
     similarities = [cosine_similarity(query_embedding, embedding) for embedding in embeddings]
     top_k_indices = sorted(range(len(similarities)), key=lambda i: similarities[i], reverse=True)[:k]
     return [(chunks[i], similarities[i]) for i in top_k_indices]
 
-
-for query in queries:
-    print(f"\nQuery: {query}")
-
-    results = retrieve_top_k_documents(
-        query,
-        embeddings,
-        chunks,
-        k=3
-    )
-
-    for rank, (chunk, score) in enumerate(results, start=1):
-        print(
-            f"{rank}. {chunk['source']} | "
-            f"chunk {chunk['chunk_id']} | "
-            f"{score:.4f}"
-        )
 
 def build_context(results):
     blocks = []
@@ -66,16 +42,40 @@ def build_prompt(question, context):
     )
 
 
-test_questions = [
-    "What did Bach do at CMHA?",
-    "What position did Bach have at Google?",
-]
+if __name__ == "__main__":
+    queries = [
+        "What Azure experience does Bach have?",
+        "What computer vision research has Bach done?",
+        "What did Bach do at CMHA?"
+    ]
 
-for question in test_questions:
-    results = retrieve_top_k_documents(question, embeddings, chunks, k=3)
-    context = build_context(results)
-    prompt = build_prompt(question, context)
-    answer = generate_answer(prompt)
+    for query in queries:
+        print(f"\nQuery: {query}")
 
-    print(f"\nQuestion: {question}")
-    print(f"Answer: {answer}")
+        results = retrieve_top_k_documents(
+            query,
+            embeddings,
+            chunks,
+            k=3
+        )
+
+        for rank, (chunk, score) in enumerate(results, start=1):
+            print(
+                f"{rank}. {chunk['source']} | "
+                f"chunk {chunk['chunk_id']} | "
+                f"{score:.4f}"
+            )
+
+    test_questions = [
+        "What did Bach do at CMHA?",
+        "What position did Bach have at Google?",
+    ]
+
+    for question in test_questions:
+        results = retrieve_top_k_documents(question, embeddings, chunks, k=3)
+        context = build_context(results)
+        prompt = build_prompt(question, context)
+        answer = generate_answer(prompt)
+
+        print(f"\nQuestion: {question}")
+        print(f"Answer: {answer}")
