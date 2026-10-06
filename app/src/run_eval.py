@@ -2,8 +2,8 @@ import json
 import time
 from pathlib import Path
 
-from embed_documents import embeddings, chunks, retrieve_top_k_documents, build_context, build_prompt
-from generate import generate_answer, MODEL
+from src.embed_documents import embeddings, chunks, retrieve_top_k_documents, build_context, build_prompt
+from src.generate import generate_answer, MODEL
 
 RESULTS_PATH = Path(__file__).resolve().parent.parent / "eval" / "results.json"
 
