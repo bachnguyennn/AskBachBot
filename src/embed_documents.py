@@ -1,6 +1,7 @@
 from sentence_transformers import SentenceTransformer
 from load_documents import load_chunks
 from similarity import cosine_similarity
+from generate import generate_answer
 
 
 model = SentenceTransformer("all-MiniLM-L6-v2")
@@ -9,7 +10,6 @@ chunks = load_chunks()
 texts = [c["text"] for c in chunks]
 
 embeddings = model.encode(texts, show_progress_bar=True, convert_to_numpy=True)
-question = "What cloud technologies has Bach worked with?"
 
 
 assert len(chunks) == len(embeddings)
@@ -44,3 +44,38 @@ for query in queries:
             f"chunk {chunk['chunk_id']} | "
             f"{score:.4f}"
         )
+
+def build_context(results):
+    blocks = []
+    for rank, (chunk, score) in enumerate(results, start=1):
+        blocks.append(
+            f"[{rank}] (source: {chunk['source']}, chunk {chunk['chunk_id']})\n"
+            f"{chunk['text']}"
+        )
+    return "\n\n---\n\n".join(blocks)
+
+
+def build_prompt(question, context):
+    return (
+        "Answer the question using only the context below. "
+        "If the answer is not in the context, say you don't know. "
+        "Cite the sources you use, like [1] or [2].\n\n"
+        f"Context:\n{context}\n\n"
+        f"Question: {question}\n"
+        "Answer:"
+    )
+
+
+test_questions = [
+    "What did Bach do at CMHA?",
+    "What position did Bach have at Google?",
+]
+
+for question in test_questions:
+    results = retrieve_top_k_documents(question, embeddings, chunks, k=3)
+    context = build_context(results)
+    prompt = build_prompt(question, context)
+    answer = generate_answer(prompt)
+
+    print(f"\nQuestion: {question}")
+    print(f"Answer: {answer}")
