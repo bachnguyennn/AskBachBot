@@ -15,6 +15,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "https://bachnguyennn.github.io",
+        "http://localhost:4321",
     ],
     allow_credentials=False,
     allow_methods=["POST"],
