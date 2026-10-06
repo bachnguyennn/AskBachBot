@@ -1,7 +1,7 @@
 import json
 
-from hybrid_retriever import retrieve_hybrid
-from generate import generate_structured
+from src.hybrid_retriever import retrieve_hybrid
+from src.generate import generate_structured
 
 
 def build_context_and_source_map(results):

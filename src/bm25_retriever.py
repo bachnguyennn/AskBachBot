@@ -1,7 +1,7 @@
 import re
 
 from rank_bm25 import BM25Okapi
-from load_documents import load_chunks
+from src.load_documents import load_chunks
 
 
 STOPWORDS = {

@@ -1,10 +1,10 @@
 import json
 from pathlib import Path
 
-from embed_documents import embeddings, chunks, retrieve_top_k_documents
-from bm25_retriever import bm25, retrieve_bm25
-from hybrid_retriever import retrieve_hybrid
-from metrics import reciprocal_rank
+from src.embed_documents import embeddings, chunks, retrieve_top_k_documents
+from src.bm25_retriever import bm25, retrieve_bm25
+from src.hybrid_retriever import retrieve_hybrid
+from src.metrics import reciprocal_rank
 
 RESULTS_PATH = Path(__file__).resolve().parent.parent / "eval" / "retrieval_results.json"
 

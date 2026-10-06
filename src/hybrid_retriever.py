@@ -1,5 +1,5 @@
-from embed_documents import embeddings, chunks, retrieve_top_k_documents
-from bm25_retriever import bm25, retrieve_bm25
+from src.embed_documents import embeddings, chunks, retrieve_top_k_documents
+from src.bm25_retriever import bm25, retrieve_bm25
 
 
 def reciprocal_rank_fusion(dense_results, bm25_results, rrf_k=60):

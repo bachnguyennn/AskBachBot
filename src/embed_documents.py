@@ -1,7 +1,7 @@
 from sentence_transformers import SentenceTransformer
-from load_documents import load_chunks
-from similarity import cosine_similarity
-from generate import generate_answer
+from src.load_documents import load_chunks
+from src.similarity import cosine_similarity
+from src.generate import generate_answer
 
 
 model = SentenceTransformer("all-MiniLM-L6-v2")
