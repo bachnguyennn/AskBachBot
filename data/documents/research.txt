@@ -1,0 +1,66 @@
+UNDERGRADUATE THESIS RESEARCH — CONTINUAL LEARNING FOR VISION TRANSFORMERS
+
+Role: Undergraduate Thesis Researcher
+Lab: Visual Computing Lab, Ontario Tech University (Oshawa, Ontario)
+Supervisor: Dr. Faisal Qureshi
+Dates: September 2026 to present
+Tools used: Python, PyTorch, timm, NumPy, CUDA (NVIDIA RTX 3060), Git
+Research area: continual learning, parameter-efficient vision transformers, computer vision
+
+
+OVERVIEW
+
+Bach Nguyen is doing undergraduate thesis research on continual learning in the Visual Computing Lab at Ontario Tech University, supervised by Dr. Faisal Qureshi. The work builds on the lab's CascadedViT architecture, a parameter-efficient vision transformer.
+
+Continual learning (CL) is the problem of teaching a neural network a sequence of tasks one after another without "catastrophic forgetting", meaning the model should keep performing well on old tasks while learning new ones. This is often called the stability-plasticity dilemma.
+
+Main contributions so far:
+- Implemented a 10M-parameter CascadedViT variant under CPG (Compacting, Picking, and Growing), a continual-learning method, working inside an existing research codebase without disrupting surrounding components.
+- Collaborating with a co-author of the CascadedViT paper on the expert-routing mechanism in SEMA (a continual-learning method that grows modules and routes inputs to them).
+- Added prototype-guided routing (PRAS) to the lab's CViT-CL continual-learning pipeline, giving a reliable improvement of about 3 accuracy points.
+
+
+KEY CONCEPTS (PLAIN LANGUAGE)
+
+- CascadedViT (CViT): a vision transformer whose feed-forward layers are split into "chunks" that run as a cascade, where each chunk's input is the previous chunk's output. The XL variant used has about 10.5 million parameters.
+- CViT-CL pipeline: the lab's continual-learning setup. The pretrained backbone is frozen. When a new task shifts the data distribution, the model grows new "expansion chunks" inside its feed-forward layers (native architectural growth), trains them on the new task, then freezes them.
+- Routing: at test time the model doesn't know which task an image came from, so a router decides how much weight each grown chunk gets for each image.
+- CPG (Compacting, Picking, and Growing; Hung et al., NeurIPS 2019): a continual-learning method that prunes each task's weights to free up capacity for later tasks, reuses ("picks") earlier weights, and grows capacity when needed.
+- PRAS (Prototype-Guided Routing Auto-Selection; Pan et al., Neurocomputing 2026): a routing method that compares an image's features to per-task "prototypes" (cluster centres from k-means) in a frozen feature space and routes the image to the most similar task.
+
+
+WHAT BACH DID (SEPTEMBER 2026)
+
+1. Oracle routing diagnostic
+Bach built a diagnostic mode ("oracle routing") that routes each test image to its true task's chunks. This measures the upper bound any router could reach. Result: oracle routing scored 86.5% average accuracy, far above every real router, showing that task identification is the main bottleneck in the pipeline.
+
+2. CPG over expansion chunks
+Bach integrated CPG into the pipeline so grown chunks could reuse freed capacity instead of always growing new chunks. While testing, Bach found and fixed three bugs in the integration:
+  - reused chunks were never actually trained (0 of 42 managed weights reached the optimizer),
+  - AdamW weight decay was slowly eroding weights that were supposed to be frozen,
+  - shared BatchNorm statistics drifted across tasks.
+Even after the fixes, CPG as integrated hurt accuracy (about 53-54% average vs about 67% without it). Bach reported this honestly as a negative result and recommended not using CPG in this pipeline.
+
+3. PRAS prototype-guided routing
+Before this work, every router in the pipeline was "task-blind": test images put only about 7-11% of their routing weight on their own task's chunks. Bach adapted PRAS as the router for grown chunks.
+  - Results on CIFAR-100 (10 tasks of 10 classes, 3 random seeds): PRAS reached 70.31 ± 0.79 average accuracy and 60.54 ± 0.63 final accuracy, versus 67.37 / 57.37 for the previous autoencoder-based routing. That is a gain of about +2.9 average and +3.2 final accuracy points, consistent across all seeds.
+  - PRAS made routing task-selective: 46-50% of routing weight went to the correct task's chunks, versus about 11% before.
+  - Bach also found that each point of task-identification accuracy is worth about 0.8 points of final accuracy, and that routing based on the classifier head's posterior does not work.
+
+Recommendation from the work: use PRAS routing with the pooled shift detector, without CPG. The most valuable next step is better task identification.
+
+Bach documented all of this in a detailed technical report (experiments, analyses, reproduction commands, limitations) and a shared experiment log and changelog for the lab.
+
+
+THESIS PROPOSAL: NATIVE ARCHITECTURAL GROWTH
+
+The broader thesis direction is "CascadedViT for Continual Learning: A Native Architectural Growth Approach". The idea is to use CascadedViT's cascaded chunk structure for continual learning: when a new task arrives, the model grows new chunks that continue the existing cascade (rather than adding external adapters or parallel networks), with gating to turn chunks on or off. This sits in the architecture-based family of continual-learning methods, alongside DEN, DER, Progressive Networks, and PackNet. Experiments use CIFAR-100 split into 10 tasks, with ImageNet-100 planned.
+
+
+QUICK FACTS (FOR COMMON QUESTIONS)
+
+- What is Bach's research about? Continual learning for parameter-efficient vision transformers (CascadedViT), so models can learn new tasks without forgetting old ones.
+- Who supervises Bach? Dr. Faisal Qureshi, Visual Computing Lab, Ontario Tech University.
+- What is Bach's best result? PRAS prototype-guided routing, about +3 accuracy points over the previous router on CIFAR-100, consistent across 3 seeds.
+- Does Bach have deep learning experience? Yes: PyTorch research code, vision transformers, GPU experiments, and debugging training pipelines in an existing research codebase.
+- Related personal research project: "Nested Learning Architecture" (see projects.txt).

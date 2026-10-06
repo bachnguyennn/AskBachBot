@@ -1,0 +1,153 @@
+PROJECTS — BACH NGUYEN
+
+This document describes Bach Nguyen's personal and academic projects in machine learning, data science, and data engineering. All code is on GitHub at github.com/bachnguyennn, and longer write-ups are on bachnguyennn.github.io/projects.
+
+A theme across Bach's projects: honest methodology over flattering numbers. Bach uses leakage-free validation (temporal or walk-forward splits), picks metrics that fit the problem (AUPRC for imbalanced data, recall for screening), compares against simple baselines, and reports negative results openly.
+
+
+==================================================
+PROJECT: HOSPITAL READMISSION RISK MODEL
+==================================================
+Year: 2025
+Domain: Clinical machine learning
+Tools: Python, XGBoost, LightGBM, scikit-learn, Optuna, SHAP, SMOTE
+GitHub: github.com/bachnguyennn/Hospital_Readmission_prediction
+
+Question: Can you predict which diabetic patients will be readmitted to hospital within 30 days, in a way that would hold up in the real world?
+
+Data: UCI "Diabetes 130-US hospitals, 1999-2008" dataset, about 100,000 patient encounters with 50+ clinical features. Only about 9% of patients are readmitted within 30 days (heavy class imbalance).
+
+Approach:
+- Temporal validation: sorted encounters chronologically and held out the last 20% as the test set, so the model never trains on the future.
+- First-encounter deduplication: kept only each patient's first visit so the same patient can't appear in both train and test.
+- AUPRC (area under the precision-recall curve) as the primary metric, because accuracy and ROC-AUC are misleading with 9% positives.
+- Handled messy, high-cardinality diagnosis and medication fields; engineered clinical features such as prior admissions, total medications, and labs per day.
+- Compared XGBoost, LightGBM, and a logistic-regression baseline, tuned with Optuna, with class weighting / SMOTE for imbalance.
+
+Results: XGBoost AUPRC 0.128 (AUROC 0.634, F1 0.168); LightGBM AUPRC 0.120; logistic regression AUPRC 0.100. SHAP showed the strongest risk drivers were admission complexity, prior admissions, and total medications, which match clinical intuition.
+
+Takeaway: The numbers are modest because this is a famously hard benchmark once leakage is removed. Bach would rather report a real 0.128 than a leaky, inflated score. Possible next steps: survival analysis (time to readmission) and a fairness audit across demographic groups.
+
+
+==================================================
+PROJECT: GLOBAL GDP ETL PIPELINE
+==================================================
+Year: 2025
+Domain: Data engineering
+Tools: Python, BeautifulSoup, requests, pandas, SQLite
+GitHub: github.com/bachnguyennn/ETL-Process---IMF-GDP
+
+Summary: An end-to-end ETL (extract, transform, load) pipeline for international GDP data from the IMF.
+- Extract: scraped GDP tables from a web-archived page using BeautifulSoup and requests.
+- Transform: cleaned and normalized the data (removing stray characters such as commas and newlines, converting values from millions to billions of USD for consistency) and consolidated inconsistent records.
+- Load: loaded the result into a SQLite database with a relational schema, creating one structured, queryable table for longitudinal analysis of international economic trends.
+
+
+==================================================
+PROJECT: ONTARIO INFRASTRUCTURE AND COMMUNITY DEVELOPMENT ANALYSIS
+==================================================
+Year: 2024
+Domain: Data analysis / geospatial
+Tools: Python, pandas, NumPy, Matplotlib, Seaborn, Folium, OpenStreetMap Nominatim geocoding API
+GitHub: github.com/bachnguyennn/Ontario-Infrastructure-Analysis
+
+Summary: An exploratory analysis of public infrastructure projects in Ontario that are in planning or under construction, using the "Ontario Builds: Communities" dataset from Ontario Open Data.
+- Cleaned and standardized 19 columns of government data.
+- Filled missing region names and coordinates by geocoding postal codes through the OpenStreetMap Nominatim mapping API.
+- Built interactive Folium maps and charts showing regional distribution, funding sources (municipal, provincial, federal), and completion timelines.
+
+Findings: The Central and Northern regions have the most projects; Central leads in projects under construction while the Northeast and Northwest are mostly still in planning. Government funding is spread fairly evenly across regions, and there was no meaningful correlation between funding source or level and project progress. Most projects are expected to finish by 2028.
+
+
+==================================================
+PROJECT: INTERPRETABLE CHEST X-RAY PNEUMONIA DETECTION
+==================================================
+Year: 2025
+Domain: Medical computer vision
+Tools: PyTorch, torchvision, ResNet50, pytorch-grad-cam, scikit-learn, Gradio
+GitHub: github.com/bachnguyennn/Chest_X-Pneumonia-Detection
+
+Question: If this were a real screening tool, what kind of mistake is acceptable? In screening, a missed pneumonia case is far worse than a false alarm, so Bach designed the model for high recall.
+
+Approach: ResNet50 with ImageNet transfer learning on the Kaggle pediatric chest X-ray dataset; weighted sampling and weighted cross-entropy for class imbalance; train the head first, then fine-tune later layers; save the best checkpoint by validation F1; Grad-CAM and Eigen-CAM overlays to show where the model is looking.
+
+Results: 96.9% pneumonia recall, 90.4% accuracy, 96.5% ROC-AUC, 97.5% PR-AUC. Only 12 missed pneumonia cases, at the cost of 48 false alarms (the intended tradeoff). Bach documented the failure cases. This is a research and education prototype, not a clinical device.
+
+
+==================================================
+PROJECT: END-TO-END ELECTRICITY LOAD FORECASTING
+==================================================
+Year: 2025
+Domain: Time-series machine learning
+Tools: XGBoost, PyTorch (LSTM), PyTorch Forecasting (Temporal Fusion Transformer), Prophet, SHAP, pandas
+GitHub: github.com/bachnguyennn/Energy-Demand-Prediction
+
+Question: How accurately can hourly electricity demand be forecast, and which modelling approach wins?
+
+Approach: PJM hourly consumption data; lag features (1h, 24h, 168h), rolling statistics, cyclical time encodings, and holiday flags; 3-fold walk-forward validation so no future data leaks into training; a fair four-model comparison.
+
+Results (MAPE): XGBoost 0.81% (best, MAE 125 MW), LSTM 1.11%, Temporal Fusion Transformer 5.53%, Prophet 9.00%. SHAP confirmed short-term lag features dominate. Takeaway: boosted trees on well-engineered lag features beat fancier deep models here. A natural next step is adding weather data.
+
+
+==================================================
+PROJECT: SOCCER xG VALUE-BETTING ENGINE
+==================================================
+Year: 2025
+Domain: Quantitative / sports analytics
+Tools: XGBoost, scikit-learn, SciPy, StatsBombPy, SHAP, Optuna, pytest (37 tests)
+GitHub: github.com/bachnguyennn/Expected-Goal-Prediction
+
+Question: Can a model actually beat the betting market, measured against Pinnacle's closing odds (the sharpest line in the market)?
+
+Approach: (1) a shot-level expected-goals (xG) model in XGBoost using shot geometry and defender freeze-frames from StatsBomb open data, with Platt calibration (Brier 0.085 vs StatsBomb's own 0.079); (2) a Dixon-Coles pre-match model re-fit each matchday on prior games only; (3) a scoreline simulator; (4) expected-value betting with fractional Kelly staking; (5) a walk-forward backtest on 760 La Liga matches (2017-19).
+
+Results: an apparent +5.7% yield over 1,379 bets, but a 10,000-sample bootstrap gave a 95% confidence interval of [-3.2%, +15.0%] (p = 0.11), so the "edge" is statistically indistinguishable from luck. Takeaway: no demonstrable edge against the closing line, which is the correct answer for an efficient market. The skill shown is telling signal from variance.
+
+
+==================================================
+PROJECT: FASTTEXT SUBWORD EMBEDDINGS FROM SCRATCH
+==================================================
+Year: 2025
+Domain: NLP / representation learning
+Tools: PyTorch (Apple MPS), Gensim (baselines only), scikit-learn, t-SNE
+GitHub: github.com/bachnguyennn/Fast-Text-Embedding-System
+
+Question: Do FastText's character n-grams beat plain Skip-Gram when both are trained under identical conditions?
+
+Approach: implemented the full stack from scratch (tokenizer, subword hashing, Skip-Gram with negative sampling, training, export, evaluation) on text8 (about 17 million tokens of Wikipedia); controlled A/B comparison at 300 dimensions and 10 epochs; benchmarked against official pretrained FastText and GloVe.
+
+Results: Skip-Gram WordSim correlation 0.60 vs FastText 0.56; FastText analogy accuracy 11.3% vs 8.3% and 100% vocabulary coverage. Subwords paid off specifically on coverage and morphology. The gap to pretrained models (about 71% analogy) comes from data scale, which Bach verified by running the official models through the same evaluation scripts.
+
+
+==================================================
+PROJECT: ASTROLOC-ML — DEEP-LEARNING PLATE SOLVER
+==================================================
+Year: 2025
+Domain: Deep learning / astronomy
+Tools: PyTorch, EfficientNet-B0, OpenCV, NumPy
+GitHub: github.com/bachnguyennn/astro-ml
+
+Question: Can a CNN "plate-solve" the night sky (work out where a camera was pointing) straight from raw pixels?
+
+Approach: built a synthetic data pipeline from the HYG star catalogue (about 41,500 stars) with gnomonic projection and realistic noise; predicted (sin, cos) pairs instead of raw angles to avoid wrap-around discontinuities; three-phase transfer learning on EfficientNet-B0.
+
+Result: a clean negative result. Angular error was 65-77 degrees, barely better than random (about 90 degrees). Bach explained why: ImageNet features don't transfer to star fields, the data was too small, and plate solving is fundamentally a geometric-matching problem. Bach also built the classical triangle-hash solver (the Astrometry.net approach), which works. Takeaway: knowing when not to use deep learning is a skill.
+
+
+==================================================
+PROJECT: NESTED LEARNING ARCHITECTURE
+==================================================
+Years: 2025-2026
+Domain: ML systems research / continual learning
+Tools: PyTorch, continual learning, state-space models, fast weights
+GitHub: github.com/bachnguyennn/nested_learning
+
+Summary: A research project based on Google's Nested Learning (HOPE) work. Bach built a dual-stream continual-learning architecture that combines fast-weight token updates with an O(1) memory vault, and ran empirical ablation studies on the WikiText-103 language-modelling benchmark. The memory vault improved perplexity by 2.1 points in ablations.
+
+
+QUICK FACTS (FOR COMMON QUESTIONS)
+
+- Bach's featured projects: Nested Learning Architecture, Soccer xG Value-Betting Engine, Chest X-Ray Pneumonia Detection, Electricity Load Forecasting.
+- Data engineering projects: Global GDP ETL Pipeline, Ontario Infrastructure Analysis (plus Azure pipelines for Statistics Without Borders; see azure.txt).
+- Healthcare ML projects: Hospital Readmission Risk Model, Chest X-Ray Pneumonia Detection.
+- Deep learning projects: Chest X-Ray (ResNet50), AstroLoc-ML (EfficientNet), FastText embeddings, Nested Learning, thesis research on vision transformers (see research.txt).

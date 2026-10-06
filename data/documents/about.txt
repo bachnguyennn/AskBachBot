@@ -1,0 +1,63 @@
+ABOUT BACH NGUYEN — PROFILE, SKILLS, AND CONTACT
+
+Name: Bach Nguyen
+Location: Oshawa, Ontario, Canada
+Current status: Fourth-year BSc (Honours) Integrated Mathematics and Computer Science (Co-op) student at Ontario Tech University, expected to graduate April 2027
+Current roles (Fall 2026): Undergraduate Thesis Researcher in the Visual Computing Lab; Teaching Assistant for MATH-0900U; Events Coordinator for the Ontario Tech Computer Science Club
+
+
+SHORT BIO
+
+Bach Nguyen is a fourth-year Integrated Mathematics and Computer Science student at Ontario Tech University who builds software, data systems, and machine learning projects. Bach likes problems that sit between software, data, and mathematics.
+
+Bach has worked on internal IT systems and automation at the Canadian Mental Health Association, designed Azure data pipelines as a volunteer with Statistics Without Borders, and is now doing undergraduate research in continual learning and computer vision in Ontario Tech's Visual Computing Lab, supervised by Dr. Faisal Qureshi.
+
+Outside of school and work, Bach loves reading books and watching football (soccer).
+
+
+EXPERIENCE SUMMARY (MOST RECENT FIRST)
+
+- Undergraduate Thesis Researcher, Visual Computing Lab, Ontario Tech University (Sep 2026 – present): continual learning for vision transformers (CascadedViT, CPG, SEMA, PRAS routing). See research.txt.
+- Teaching Assistant, MATH-0900U Preparatory Mathematics for Engineers, Ontario Tech University (Sep 2026 – present). See education.txt.
+- Events Coordinator, Ontario Tech Computer Science Club (Sep 2025 – present): co-organizes an annual hackathon with 250+ participants. See education.txt.
+- IT Intern, Canadian Mental Health Association, Oshawa (May – Aug 2025): Power Apps / Power Automate booking automation that saved 5+ staff hours per week; IT support for 100+ staff. See cmha.txt.
+- Orientation Leader and Peer Mentor, Ontario Tech University (Fall 2024). See education.txt.
+- Data Engineer (Volunteer), Statistics Without Borders, Project #279 for IPÊ (Feb 2024): Azure data pipelines for biodiversity data. See azure.txt.
+- Customer service roles at Chatime and Shaker (from Fall 2022): customer assistance, point-of-sale and end-of-day reporting, daily inventory tracking.
+
+
+TECHNICAL SKILLS
+
+Programming languages: Python, SQL, Java, C++, Bash
+Machine learning and deep learning: PyTorch, scikit-learn, XGBoost, LightGBM, SHAP, Optuna, vision transformers, CNNs (ResNet, EfficientNet), LSTM, time-series forecasting, continual learning
+Data analysis: pandas, NumPy, SciPy, Matplotlib, Seaborn, Folium, Jupyter, Microsoft Excel, Power Query
+Data engineering: ETL pipelines, Apache Airflow, Docker, web scraping (BeautifulSoup)
+Cloud and Microsoft platform: Microsoft Azure, IBM Cloud, SharePoint, Power Apps, Power Automate
+Databases: MySQL, SQLite, IBM DB2
+Developer tools: Git, Visual Studio, Jupyter
+Operating systems: Windows, macOS, Linux, IBM mainframe (z/OS)
+Certifications: Microsoft Office Specialist (Word); IBM Python for Data Engineering; IBM Z Xplore – Concept Batch (z/OS, JCL, COBOL)
+
+
+STRENGTHS AND WORKING STYLE
+
+- Translating between non-technical users and technical solutions: gathering requirements from staff, building the tool, testing it, and documenting it for handoff (CMHA).
+- Rigorous, honest methodology: leakage-free validation, metrics chosen for the problem, baselines first, and reporting negative results (see projects.txt).
+- Picking up unfamiliar codebases quickly and working alongside experienced researchers (thesis research).
+- Explaining technical concepts clearly, as a teaching assistant and peer mentor.
+- Organizing events and teams: hackathon with 250+ participants, orientation week team that won 1st place.
+
+Bach's writing on the website reflects these habits: "A Practical Feature Engineering Playbook" (define the target and leakage boundaries, profile missingness and outliers, encode domain assumptions, validate features with simple models first), "When Simple Models Win" (baseline-first modelling), and "Lessons From Reproducible ML Pipelines" (separating ingestion, feature engineering, training, and evaluation).
+
+
+WHAT BACH IS LOOKING FOR
+
+Bach is interested in co-op, internship, and new-graduate opportunities in data engineering, data analysis, machine learning, and process automation and optimization.
+
+
+CONTACT AND LINKS
+
+- Email: vubach.nguyen@ontariotechu.net (the best way to reach Bach)
+- LinkedIn: linkedin.com/in/bach-nguyen-vu
+- GitHub: github.com/bachnguyennn
+- Personal website and portfolio: bachnguyennn.github.io

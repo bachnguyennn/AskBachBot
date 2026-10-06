@@ -1,0 +1,51 @@
+IT INTERN — CANADIAN MENTAL HEALTH ASSOCIATION (CMHA DURHAM)
+
+Role: IT Intern (co-op / summer internship)
+Organization: Canadian Mental Health Association (CMHA) Durham
+Location: Oshawa, Ontario, Canada
+Dates: May 2025 to August 2025
+Tools used: Microsoft Power Apps, Power Automate, SharePoint, Microsoft Excel (lookup formulas, pivot tables, Power Query), Windows servers, clinical software support
+
+
+OVERVIEW
+
+During summer 2025, Bach Nguyen worked as an IT Intern at the Canadian Mental Health Association (CMHA) Durham in Oshawa, Ontario. CMHA is a non-profit that provides community mental health services. Bach's work combined building internal automation, managing employee data, and day-to-day IT support for more than 100 staff.
+
+
+KEY ACHIEVEMENT: BOOKING AND SCHEDULING AUTOMATION
+
+The biggest project of the internship was automating a manual scheduling and booking process end to end using Power Apps and Power Automate.
+
+- Problem: Staff were booking rooms and appointments manually, which caused recurring double-booking errors and took a lot of staff time.
+- Solution: Bach built and deployed booking workflows with Power Apps (the user-facing app) and Power Automate (the automated workflow logic), backed by SharePoint.
+- Result: The new system eliminated the recurring double-booking errors and saved staff an estimated 5+ hours of manual scheduling work per week.
+- Process: Bach gathered requirements directly from non-technical staff, translated their operational problems into technical solutions, validated the workflow outputs and data accuracy through structured testing before deployment, and then wrote technical documentation so the internal IT team could maintain and support the system after the internship ended.
+
+
+DATA MANAGEMENT AND REPORTING
+
+- Managed employee data and company files in SharePoint.
+- Consolidated employee and staff records into Excel workbooks using lookup formulas and pivot tables to support direct manager reporting.
+
+
+IT SUPPORT AND SYSTEMS
+
+- Investigated and resolved tier-1 and tier-2 IT and production issues for 100+ staff.
+- Maintained the servers behind CMHA's clinical software, keeping systems that are critical to client services available.
+- Helped modernize legacy internal tools, working with staff across teams to improve accessibility of internal systems.
+
+
+WHAT BACH LEARNED AT CMHA
+
+Bach has said this internship taught that a good technical solution is not just about making something work: it has to make someone's work easier and stay reliable after deployment. The internship built experience in working directly with non-technical stakeholders, requirements gathering, testing before deployment, and writing handoff documentation.
+
+Why CMHA: Bach was drawn to CMHA Durham's emphasis on inclusivity, wellness, and making a positive impact in the community, and wanted to apply technical skills to an organization with a meaningful mission.
+
+
+QUICK FACTS (FOR COMMON QUESTIONS)
+
+- Where did Bach intern? Canadian Mental Health Association (CMHA) Durham, Oshawa, ON.
+- When? May 2025 to August 2025.
+- What did Bach build? Power Apps + Power Automate booking workflows that ended double-bookings and saved 5+ staff hours per week.
+- How many users supported? 100+ staff.
+- Has Bach worked with the Microsoft Power Platform? Yes: Power Apps, Power Automate, and SharePoint in a production setting at CMHA.

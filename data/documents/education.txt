@@ -1,0 +1,89 @@
+EDUCATION, TEACHING, AND CAMPUS LEADERSHIP
+
+University: Ontario Tech University, Oshawa, Ontario, Canada
+Degree: Bachelor of Science (Honours), Integrated Mathematics and Computer Science (Co-op program)
+Dates: September 2023 to April 2027 (expected graduation)
+Year: fourth year (2026-2027 academic year)
+Cumulative GPA: 3.77 / 4.3
+Academic honours: President's List (3 times), Dean's List (2 times)
+
+
+DEGREE OVERVIEW
+
+Bach Nguyen studies Integrated Mathematics and Computer Science at Ontario Tech University in the co-op stream. The program combines rigorous mathematics (analysis, linear algebra, optimization, statistics) with core computer science (algorithms, data structures, databases, software design).
+
+
+RELEVANT COURSEWORK — MATHEMATICS
+
+- Calculus I, II, and III
+- Linear Algebra
+- Advanced Linear Algebra and Applications
+- Differential Equations
+- Real Analysis
+- Complex Analysis
+- Optimization
+- Mathematical Modelling
+- Statistics and Probability
+- Discrete Mathematics
+
+
+RELEVANT COURSEWORK — COMPUTER SCIENCE
+
+- Data Structures
+- Analysis and Design of Algorithms
+- Database Systems
+- Software Systems Development and Integration
+- Software Design and Analysis
+- Computer Architecture
+- Scientific Data Analysis
+- Computational Science
+- Simulation and Modelling
+- Data Mining
+- Computer Vision (in progress, Fall 2026)
+- Quantum Computing (in progress, Fall 2026)
+
+
+CERTIFICATIONS
+
+- Microsoft Office Specialist (Word)
+- IBM Python for Data Engineering
+- IBM Z Xplore – Concept Batch (z/OS, JCL, COBOL on IBM mainframes)
+
+
+UNDERGRADUATE THESIS
+
+Bach is doing an undergraduate thesis in the Visual Computing Lab, supervised by Dr. Faisal Qureshi, on continual learning for vision transformers. See research.txt for details.
+
+
+TEACHING ASSISTANT — PREPARATORY MATHEMATICS FOR ENGINEERS (MATH-0900U)
+
+Role: Teaching Assistant
+Course: MATH-0900U, Preparatory Mathematics for Engineers
+Organization: Ontario Tech University, Oshawa, ON
+Dates: September 2026 to present
+
+- Leads weekly tutorials for a first-year engineering mathematics course, explaining technical concepts to students with a wide range of mathematical preparation.
+- Invigilates exams and grades all tutorial work, midterms, and final exams, giving students feedback.
+
+
+CAMPUS LEADERSHIP AND COMMUNITY INVOLVEMENT
+
+Events Coordinator, Ontario Tech Computer Science Club (September 2025 to present)
+- Co-organizes the club's annual hackathon with 250+ participants, leading logistics, sponsor relations and outreach, volunteers, and event-day operations.
+- Organizes student-focused events of 20-30 participants that encourage collaboration and peer networking.
+
+Orientation Leader and Peer Mentor, Ontario Tech University (Fall 2024)
+- Mentored 20 first-year students through their academic transition, helping them build community and settle into campus life.
+- Coordinated logistics for university orientation events and helped new students with orientation activities.
+- Led a team during orientation week that won 1st place in the Faculty of Science "Wild Goose Chase" challenge.
+
+Hackathon participation: Hack Hive hackathon, Azure Challenge and AI Challenge (see azure.txt).
+
+
+QUICK FACTS (FOR COMMON QUESTIONS)
+
+- Where does Bach study? Ontario Tech University in Oshawa, Ontario.
+- What is Bach's major? BSc (Honours) Integrated Mathematics and Computer Science, co-op.
+- When does Bach graduate? Expected April 2027.
+- What is Bach's GPA? 3.77 out of 4.3, with President's List 3 times and Dean's List twice.
+- Is Bach a TA? Yes, for MATH-0900U Preparatory Mathematics for Engineers since September 2026.

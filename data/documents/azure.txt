@@ -1,0 +1,47 @@
+AZURE AND CLOUD DATA ENGINEERING EXPERIENCE
+
+This document covers Bach Nguyen's cloud and Azure experience: volunteer data engineering with Statistics Without Borders, an Azure hackathon challenge, and related cloud and data-engineering tools.
+
+
+DATA ENGINEER (VOLUNTEER) — STATISTICS WITHOUT BORDERS, PROJECT #279
+
+Role: Data Engineer (Volunteer)
+Organization: Statistics Without Borders (SWB), Project #279
+Client: IPÊ (Instituto de Pesquisas Ecológicas, the Institute for Ecological Research), a biodiversity and conservation organization in Brazil
+Location: Remote
+Dates: February 2024
+Tools used: Microsoft Azure (cloud storage and data pipelines)
+
+What the project was: IPÊ stored large-scale environmental and biodiversity datasets across Dropbox and OneDrive, which made the data hard to organize, query, and scale. Statistics Without Borders, a volunteer organization of the American Statistical Association, put together a cross-disciplinary team of statisticians, engineers, and scientists to help.
+
+What Bach did:
+- Reviewed IPÊ's existing data storage and management practices and identified the challenges of keeping large environmental datasets in consumer file-sharing tools.
+- Researched alternative data-engineering solutions by benchmarking best practices from similar organizations and industries.
+- Designed sample Azure data pipelines to organize the large-scale biodiversity datasets for the team.
+- Audited cloud storage practices and designed a data-organization strategy to improve query performance and reduce storage costs.
+- Worked with statisticians and scientists to align the data solution with research needs and support data-driven decisions for biodiversity conservation.
+
+
+HACK HIVE HACKATHON — AZURE CHALLENGE
+
+Bach took part in the Azure Challenge at the Hack Hive hackathon. The team designed a system using Microsoft Azure cloud services and presented the idea and its cloud architecture maps to Microsoft Azure directors and specialists.
+
+At the same hackathon, Bach also took on the AI challenge: building an object-detection tool with MediaPipe and a YOLO model, using finger gestures, aimed at helping people with visual impairments.
+
+
+CLOUD, AUTOMATION, AND DATA-ENGINEERING SKILLS
+
+- Cloud: Microsoft Azure, IBM Cloud
+- Microsoft platform: Power Apps, Power Automate, SharePoint, Excel and Power Query (used in production at CMHA; see cmha.txt)
+- Data engineering: ETL pipelines, Apache Airflow, Docker, web scraping with BeautifulSoup
+- Databases: MySQL, SQLite, IBM DB2
+- Mainframe: IBM Z Xplore Concept Batch certification (z/OS, JCL, COBOL)
+- Certification: IBM Python for Data Engineering
+
+
+QUICK FACTS (FOR COMMON QUESTIONS)
+
+- Does Bach have Azure experience? Yes: designed Azure data pipelines for Statistics Without Borders (Feb 2024) and presented an Azure architecture at the Hack Hive Azure Challenge.
+- Who was the SWB client? IPÊ, the Institute for Ecological Research (biodiversity conservation).
+- What was the outcome? A data-organization strategy and sample Azure pipelines designed to reduce query times and storage costs for large biodiversity datasets.
+- Does Bach know Airflow or Docker? Yes, both are part of Bach's data-engineering toolset.
