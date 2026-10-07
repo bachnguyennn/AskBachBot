@@ -6,7 +6,7 @@ from src.bm25_retriever import bm25, retrieve_bm25
 from src.hybrid_retriever import retrieve_hybrid
 from src.metrics import reciprocal_rank
 
-RESULTS_PATH = Path(__file__).resolve().parent.parent / "eval" / "retrieval_results.json"
+RESULTS_PATH = Path(__file__).resolve().parents[2] / "eval" / "retrieval_results.json"
 
 # Frozen configuration -- do not tune against this eval set.
 CANDIDATE_K = 10

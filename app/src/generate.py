@@ -4,7 +4,9 @@ from pathlib import Path
 from dotenv import load_dotenv
 from groq import Groq
 
-load_dotenv(Path(__file__).resolve().parent.parent / ".env")
+# local development only: load the repo-root .env if it exists. It never overrides
+# real environment variables, and in Docker/Azure GROQ_API_KEY comes from the runtime.
+load_dotenv(Path(__file__).resolve().parents[2] / ".env")
 
 client = Groq()  # reads GROQ_API_KEY from the environment
 

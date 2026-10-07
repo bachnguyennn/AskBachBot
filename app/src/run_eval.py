@@ -5,7 +5,7 @@ from pathlib import Path
 from src.embed_documents import embeddings, chunks, retrieve_top_k_documents, build_context, build_prompt
 from src.generate import generate_answer, MODEL
 
-RESULTS_PATH = Path(__file__).resolve().parent.parent / "eval" / "results.json"
+RESULTS_PATH = Path(__file__).resolve().parents[2] / "eval" / "results.json"
 
 # should_answer: True if the documents contain the evidence, False if the model should refuse
 EVAL_SET = [

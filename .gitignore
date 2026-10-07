@@ -1,2 +1,10 @@
+# Python
+__pycache__/
+*.py[cod]
+
+# Environments and secrets
 .venv/
 .env
+
+# OS
+.DS_Store
