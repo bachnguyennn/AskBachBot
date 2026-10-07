@@ -1,6 +1,8 @@
-from src.embed_documents import embeddings, chunks, retrieve_top_k_documents
+from src.cosmos_retriever import retrieve_top_k_cosmos
 from src.bm25_retriever import bm25, retrieve_bm25
+from src.load_documents import load_chunks
 
+chunks = load_chunks()
 
 def reciprocal_rank_fusion(dense_results, bm25_results, rrf_k=60):
     rrf_scores = {}
@@ -17,7 +19,10 @@ def reciprocal_rank_fusion(dense_results, bm25_results, rrf_k=60):
 
 
 def retrieve_hybrid(query, candidate_k=10, final_k=3, rrf_k=60):
-    dense_results = retrieve_top_k_documents(query, embeddings, chunks, k=candidate_k)
+    dense_results = retrieve_top_k_cosmos(
+    query,
+    k=candidate_k
+    )
     bm25_results = retrieve_bm25(query, chunks, bm25, k=candidate_k)
     return reciprocal_rank_fusion(dense_results, bm25_results, rrf_k=rrf_k)[:final_k]
 
@@ -33,7 +38,7 @@ if __name__ == "__main__":
     ]
 
     for question in questions:
-        dense_results = retrieve_top_k_documents(question, embeddings, chunks, k=candidate_k)
+        dense_results = retrieve_top_k_cosmos(question, k=candidate_k)
         bm25_results = retrieve_bm25(question, chunks, bm25, k=candidate_k)
         hybrid_results = reciprocal_rank_fusion(dense_results, bm25_results, rrf_k=rrf_k)
 
