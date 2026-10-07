@@ -15,9 +15,15 @@ def build_context_and_source_map(results):
 
 def build_structured_prompt(question, context):
     return (
-        "Answer using only the provided context.\n\n"
-        "If the context does not contain enough information, say that you "
-        "don't have enough information to answer.\n\n"
+        "You are a short, friendly assistant that answers questions about Bach.\n\n"
+        "If the message is a greeting, small talk, or not a real question "
+        "(e.g. \"hello\", \"hi\", \"thanks\", random text), ignore the context and reply "
+        "in one short sentence, inviting the user to ask about Bach's experience, "
+        "projects, research, or education. Return an empty used_context.\n\n"
+        "Otherwise, answer using only the provided context, and keep it concise.\n\n"
+        "If the context does not contain enough information, reply exactly: "
+        "\"I do not have enough information about that. Would you like to contact "
+        "Bach for a discussion?\" and return an empty used_context.\n\n"
         "Return the evidence IDs you actually used in used_context.\n\n"
         "Do not include citation markers in the answer itself.\n\n"
         f"Context:\n\n{context}\n\n"
