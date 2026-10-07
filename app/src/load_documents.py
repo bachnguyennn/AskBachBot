@@ -1,15 +1,35 @@
 from pathlib import Path
 
+from src.database import container
+
 DOCS_DIR = Path(__file__).resolve().parent.parent / "data" / "documents"
 
 
-def load_documents(docs_dir=DOCS_DIR):
-    docs = []
-    for path in sorted(docs_dir.glob("*.txt")):
-        text = path.read_text(encoding="utf-8").strip()
-        if text:
-            docs.append({"source": path.name, "text": text})
-    print(f"Loaded {len(docs)} documents from {docs_dir}")
+def load_documents():
+    items = list(
+        container.query_items(
+            query="""
+                SELECT c.source, c.text
+                FROM c
+                WHERE c.type = 'document'
+            """,
+            enable_cross_partition_query=True,
+        )
+    )
+
+    docs = [
+        {
+            "source": item["source"],
+            "text": item["text"],
+        }
+        for item in items
+        if item.get("text", "").strip()
+    ]
+
+    docs.sort(key=lambda d: d["source"])
+
+    print(f"Loaded {len(docs)} documents from Cosmos DB")
+
     return docs
 
 
@@ -35,9 +55,12 @@ def chunk_document(doc, max_chars=1200):
     ]
 
 
-def load_chunks(docs_dir=DOCS_DIR, max_chars=1200):
-    return [c for d in load_documents(docs_dir) for c in chunk_document(d, max_chars)]
-
+def load_chunks(max_chars=1200):
+    return [
+        c
+        for d in load_documents()
+        for c in chunk_document(d, max_chars)
+    ]
 
 if __name__ == "__main__":
     chunks = load_chunks()
