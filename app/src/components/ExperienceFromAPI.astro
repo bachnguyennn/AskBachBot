@@ -1,0 +1,58 @@
+<section>
+  <h2>Experience from Cosmos DB</h2>
+
+  <div id="experience-list">Loading experience...</div>
+</section>
+
+<script>
+  const list = document.getElementById("experience-list");
+
+  async function loadExperience() {
+    if (!list) return;
+
+    try {
+      const API_URL = import.meta.env.PUBLIC_CHAT_API_URL;
+
+      const response = await fetch(
+        `${API_URL.replace(/\/$/, "")}/content/experience`
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      list.replaceChildren();
+
+      for (const experience of data.experiences) {
+        const card = document.createElement("article");
+
+        const title = document.createElement("h3");
+        title.textContent = experience.role;
+
+        const organization = document.createElement("p");
+        organization.textContent = experience.organization;
+
+        const period = document.createElement("p");
+        period.textContent = experience.period;
+
+        const highlights = document.createElement("ul");
+
+        for (const highlight of experience.highlights) {
+          const item = document.createElement("li");
+          item.textContent = highlight;
+          highlights.appendChild(item);
+        }
+
+        card.append(title, organization, period, highlights);
+        list.appendChild(card);
+      }
+    } catch (error) {
+      console.error(error);
+      list.textContent = "Unable to load experience.";
+    }
+  }
+
+  loadExperience();
+</script>

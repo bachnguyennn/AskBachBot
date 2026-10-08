@@ -48,6 +48,8 @@ When the knowledge base does not contain the answer, it declines instead of gues
 - **Deployed:** Docker image in Azure Container Registry, running on Azure Container Apps, pulled with a managed identity, and called over HTTPS from a GitHub Pages / Astro front end.
 
 > **Status (2026-10-06):** live in production and called by the portfolio site. There is no automated test suite yet; see [Roadmap](#roadmap).
+>
+> **Migration in progress (2026-10-07):** the knowledge base is moving to **Azure Cosmos DB for NoSQL** with vector search. On `main`, documents are now read from Cosmos DB instead of disk. Production (`ask-bach-api:v4`) still serves the file-based version until the [deployment blockers](docs/adr/0001-move-knowledge-base-to-cosmos-db.md#before-deploying-to-container-apps) are resolved. See [ADR 0001](docs/adr/0001-move-knowledge-base-to-cosmos-db.md) for the decision, data model and status.
 
 ---
 
@@ -57,20 +59,29 @@ When the knowledge base does not contain the answer, it declines instead of gues
 .
 ├── app/                         # Python project root (run commands from here)
 │   ├── data/
-│   │   └── documents/           # Knowledge base: 6 plain-text profile documents
+│   │   └── documents/           # Knowledge base source: 6 plain-text documents (uploaded to Cosmos DB)
+│   ├── scripts/                 # Offline Cosmos DB jobs (run as python -m scripts.<name>)
+│   │   ├── migrate_documents.py # Upsert .txt files → `content` container
+│   │   ├── index_chunks.py      # Chunk + embed → `chunks` container (vector-indexed)
+│   │   └── test_vector_search.py# Sanity check of a VectorDistance query
 │   ├── src/
+│   │   ├── database.py          # Cosmos DB client (Entra ID via DefaultAzureCredential)
 │   │   ├── api.py               # FastAPI app: GET /, POST /ask, CORS, validation
 │   │   ├── rag.py               # ★ Pipeline orchestrator: answer_question()
 │   │   ├── generate.py          # Groq client, structured generation
 │   │   ├── hybrid_retriever.py  # Reciprocal Rank Fusion of dense + BM25
 │   │   ├── bm25_retriever.py    # Tokenizer, BM25 index and retriever
 │   │   ├── embed_documents.py   # MiniLM dense index and retriever
-│   │   ├── load_documents.py    # Load, clean and chunk documents
+│   │   ├── load_documents.py    # Load documents from Cosmos DB, clean and chunk
 │   │   ├── similarity.py        # Cosine similarity
 │   │   ├── metrics.py           # reciprocal_rank() for MRR@k
 │   │   ├── eval_retrieval.py    # Retrieval evaluation (Recall, Precision, MRR @3)
 │   │   └── run_eval.py          # End-to-end answer evaluation (legacy pipeline)
+│   ├── vector-policy.json       # Cosmos DB vector embedding policy for `chunks`
+│   ├── index-policy.json        # Cosmos DB indexing policy for `chunks`
+│   ├── test_cosmos.py           # One-off Cosmos DB connectivity check
 │   └── requirements.txt         # Pinned dependencies
+├── docs/adr/                    # Architecture Decision Records
 ├── eval/                        # Canonical evaluation outputs (JSON)
 ├── Dockerfile                   # Production image (python:3.12-slim + uvicorn)
 ├── LICENSE                      # MIT, covers the code
@@ -128,7 +139,10 @@ Docker container                (python:3.12-slim, linux/amd64)
         │
         ▼
 FastAPI + Uvicorn               (src/api.py)
-        │
+        │                          ┌─────────────────────────────────────────────┐
+        │  at startup: documents   │ Azure Cosmos DB for NoSQL   (Central US)    │
+        │ ◄─────────────────────── │  db ask-bach: content, chunks (vector)      │
+        │  (main branch only)      └─────────────────────────────────────────────┘
         ▼
 Hybrid RAG                      (src/rag.py → dense + BM25 → RRF → context)
         │  prompt + JSON schema
@@ -208,8 +222,8 @@ This section documents every step data goes through, from a hand-written text fi
 
 ```mermaid
 flowchart TD
-    subgraph OFF["Offline: authoring"]
-        S1["1. Source documents<br/>data/documents/*.txt"]
+    subgraph OFF["Offline: authoring and upload"]
+        S1["1. Source documents<br/>data/documents/*.txt"] --> S1b["Cosmos DB content container<br/>scripts.migrate_documents"]
     end
 
     subgraph START["Startup: index build (once per process)"]
@@ -229,7 +243,7 @@ flowchart TD
         S10 --> R["{answer, sources}"]
     end
 
-    S1 --> S2
+    S1b --> S2
     S4 --> S6a
     S5 --> S6b
 ```
@@ -238,24 +252,24 @@ flowchart TD
 
 | Phase | When it runs | What happens | Cost |
 |---|---|---|---|
-| **Authoring** | Manually, when profile information changes | Edit or add `.txt` files in `app/data/documents/`. | None at runtime. |
-| **Image build** | `docker buildx build` | Documents and code are copied into the image. Indexes are **not** precomputed. | One-off. |
-| **Startup** | When `src.api` is first imported (container start or `uvicorn` launch) | Documents are loaded and chunked, the embedding model is loaded (downloaded on first boot), all 33 chunks are embedded, and the BM25 index is built. | Several seconds; about 90 MB model download on a fresh container. This is the main cold-start cost. |
+| **Authoring** | Manually, when profile information changes | Edit or add `.txt` files in `app/data/documents/`, then upload them to Cosmos DB (see [Adding or updating a document](#adding-or-updating-a-document)). | A few RUs per upsert. |
+| **Image build** | `docker buildx build` | Code is copied into the image (`app/data/` is still copied but no longer read at runtime). Indexes are **not** precomputed. | One-off. |
+| **Startup** | When `src.api` is first imported (container start or `uvicorn` launch) | Documents are queried from Cosmos DB and chunked, the BM25 index is built, and the embedding model is loaded (downloaded on first boot) to embed *queries*. Chunks are no longer embedded at startup. | A few seconds; about 90 MB model download on a fresh container. This is the main cold-start cost. |
 | **Request** | Every `POST /ask` | Retrieval, fusion, context assembly, one LLM call, source resolution. | Retrieval takes milliseconds; the Groq call dominates (about 0.4–1.3 s observed). |
 
-Indexes live in process memory only. Nothing is persisted between restarts, and there is no vector database. At 33 chunks this is the simplest correct design; see [Design decisions](#design-decisions).
+**Dense retrieval now runs in Cosmos DB.** Chunk embeddings are computed offline by `scripts.index_chunks` and stored in the `chunks` container, and `retrieve_hybrid` gets its dense candidates from a `VectorDistance` query (`src/cosmos_retriever.py`), which costs one Cosmos DB query per request. The BM25 index still lives in process memory and is rebuilt on every start. `src/embed_documents.py` (the in-memory dense retriever) is now used only by the evaluation scripts. The stages below describe the in-memory pipeline that the published evaluation measured; the [parity check](#cosmos-db-dense-retrieval-parity-check) shows that Cosmos DB returns identical dense results.
 
 ### Stage 1: Source documents
 
-**Location:** `app/data/documents/`. Six hand-written plain-text files. They are the **only** source of truth the model can draw on. See [Knowledge base](#knowledge-base).
+**Location:** `app/data/documents/` (authoring copy) → Cosmos DB `ask-bach/content` (runtime copy). Six hand-written plain-text files. They are the **only** source of truth the model can draw on. See [Knowledge base](#knowledge-base).
 
 ### Stage 2: Ingestion
 
-**Function:** `load_documents(docs_dir=DOCS_DIR)` in `src/load_documents.py`
+**Function:** `load_documents()` in `src/load_documents.py`
 
-- Reads every `*.txt` file in `DOCS_DIR`, **sorted by filename**, so ordering and chunk numbering are deterministic.
-- Decodes as UTF-8, strips surrounding whitespace, and skips empty files.
-- `DOCS_DIR` is resolved relative to the source file, so it works from any working directory: `app/data/documents` locally and `/app/data/documents` in the container.
+- Queries `SELECT c.source, c.text FROM c WHERE c.type = 'document'` on the `content` container (cross-partition; the partition key is `/type`).
+- Skips items with empty text, then **sorts by `source`**. Cosmos DB doesn't guarantee result order, so this sort is what keeps chunk numbering deterministic.
+- Authenticates with `DefaultAzureCredential` (`src/database.py`): your `az login` session locally, and a managed identity in Azure.
 
 **Output:** `[{"source": "about.txt", "text": "<full file text>"}, ...]`
 
@@ -417,9 +431,12 @@ The chunker depends on these rules:
 ### Adding or updating a document
 
 1. Edit or add a `.txt` file in `app/data/documents/`.
-2. From `app/`, check chunking with `python -m src.load_documents` and spot-check retrieval with `python -m src.hybrid_retriever`.
-3. If chunk IDs moved, update the labels in `src/eval_retrieval.py`, re-run `python -m src.eval_retrieval`, and compare against the [published results](#retrieval-evaluation).
-4. Rebuild and redeploy the image ([Updating the deployment](#updating-the-deployment)). Indexes are rebuilt at startup, so there is no separate indexing job.
+2. From `app/` (signed in with `az login`), upload it with `python -m scripts.migrate_documents`, then re-embed with `python -m scripts.index_chunks`. Order matters: `index_chunks` reads documents from Cosmos DB, not from disk.
+3. Check chunking with `python -m src.load_documents` and spot-check retrieval with `python -m src.hybrid_retriever`.
+4. If chunk IDs moved, update the labels in `src/eval_retrieval.py`, re-run `python -m src.eval_retrieval`, and compare against the [published results](#retrieval-evaluation).
+5. Restart the app (a new revision, or `az containerapp revision restart`) so it rebuilds its in-memory indexes. You don't need to rebuild the image just for a content change.
+
+> ⚠️ Both upload scripts only **upsert**. If you delete or rename a `.txt` file, also delete its items from the `content` and `chunks` containers, or the old document will keep being served. See [ADR 0001 → Updating content](docs/adr/0001-move-knowledge-base-to-cosmos-db.md#updating-content).
 
 ---
 
@@ -431,6 +448,7 @@ The chunker depends on these rules:
 |---|---|
 | Python **3.12** | Matches the Docker base image. |
 | A Groq API key | Free at [console.groq.com/keys](https://console.groq.com/keys). |
+| Azure CLI, signed in (`az login`) | The app reads its documents from Cosmos DB with your Entra ID identity. That identity needs the **Cosmos DB Built-in Data Contributor** role (or a reader role) on the account. |
 | About 2 GB of disk | Mostly PyTorch. The embedding model (about 90 MB) downloads from Hugging Face on first run. |
 | Docker with Buildx *(optional)* | Only needed to build or deploy the container. |
 
@@ -455,6 +473,8 @@ echo "GROQ_API_KEY=<your-groq-api-key>" > .env
 
 In Docker and Azure, no `.env` file is involved; the key is supplied by the runtime.
 
+Cosmos DB needs no key. `src/database.py` uses `DefaultAzureCredential`, which picks up your `az login` session locally. The account endpoint is currently a constant (`COSMOS_ENDPOINT`) in that file.
+
 ### Run the API locally
 
 ```bash
@@ -462,7 +482,7 @@ cd app
 uvicorn src.api:app --reload --port 8000
 ```
 
-Startup takes a few seconds while the indexes are built; `Loaded 6 documents ...` prints twice, once per index. Then:
+Startup takes a few seconds while the indexes are built; `Loaded 6 documents from Cosmos DB` prints twice, once per index. Then:
 
 ```bash
 curl -s http://localhost:8000/
@@ -487,6 +507,9 @@ Every module with a `__main__` block doubles as a runnable demo. Run them from `
 | `python -m src.eval_retrieval` | Full retrieval evaluation; writes `eval/retrieval_results.json` | No |
 | `python -m src.rag` | `resolve_sources` self-checks, then two verbose end-to-end answers | Yes (2 calls) |
 | `python -m src.run_eval` | 8-question end-to-end evaluation; writes `eval/results.json` | Yes (8 calls) |
+| `python -m scripts.migrate_documents` | Upserts every `.txt` file into Cosmos DB `content` | No (writes to Cosmos DB) |
+| `python -m scripts.index_chunks` | Chunks, embeds and upserts all chunks into Cosmos DB `chunks` | No (writes to Cosmos DB) |
+| `python -m scripts.test_vector_search` | Top 3 `VectorDistance` results from Cosmos DB for one question | No |
 
 ---
 
@@ -498,6 +521,7 @@ Every module with a `__main__` block doubles as a runnable demo. Run them from `
 |---|---|---|
 | `GROQ_API_KEY` | **Yes** | Authenticates calls to the Groq API. In Azure it comes from the `groq-api-key` Container Apps secret. |
 | `HF_TOKEN` | No | Hugging Face token; only needed if model downloads are rate-limited. |
+| `AZURE_CLIENT_ID` | In Azure | Client ID of the user-assigned managed identity that `DefaultAzureCredential` should use for Cosmos DB. It isn't needed locally and isn't set in production yet; see [ADR 0001](docs/adr/0001-move-knowledge-base-to-cosmos-db.md#before-deploying-to-container-apps). |
 
 ### Tunable parameters
 
@@ -652,6 +676,7 @@ docker run --rm -p 8000:8000 --env-file .env ask-bach-api
 | Image registry | **Azure Container Registry** (Basic), versioned tags (e.g. `ask-bach-api:v2`) |
 | Registry auth | **User-assigned managed identity** with the `AcrPull` role; no registry passwords in the app |
 | LLM credential | `groq-api-key` **Container Apps secret**, exposed to the container as `GROQ_API_KEY` via `secretref` |
+| Knowledge base *(main branch, not yet deployed)* | **Azure Cosmos DB for NoSQL** `bach-rag-cosmos-central` (Central US, free tier, vector search on), database `ask-bach`, accessed with Entra ID. See [ADR 0001](docs/adr/0001-move-knowledge-base-to-cosmos-db.md) for the setup and the three steps needed before the next image will start in Azure. |
 
 ### Deploying from scratch
 
@@ -781,6 +806,126 @@ More specifically:
 - **The paraphrases are easier than real user questions.** They were written by someone who knows the documents, and several reuse document wording, so they do not fully stress-test BM25.
 - **Retrieval metrics say nothing about answer correctness.** Groundedness is not yet measured (see the lifecycle example above).
 
+### Cosmos DB dense retrieval: parity check
+
+**Script:** `app/eval/eval_cosmos_dense.py` (no LLM calls; run from `app/` with `python -m eval.eval_cosmos_dense`).
+
+When dense retrieval moved from in-memory NumPy search to a Cosmos DB `VectorDistance` query ([ADR 0001](docs/adr/0001-move-knowledge-base-to-cosmos-db.md)), the question was whether results would change. They shouldn't: both use the same MiniLM embeddings and cosine similarity, and the `chunks` container uses a `flat` vector index, which is exact brute-force search rather than approximate. This script reruns the dense column of the benchmark against Cosmos DB with the same relevance labels.
+
+**Result (2026-10-08): Cosmos DB reproduces the in-memory dense retriever exactly.** For all 10 frozen benchmark questions, it returns the same top 3 chunks, in the same order, with the same scores to four decimal places. The script reworded one question (marked †), so that row comes from the script, and the frozen wording was checked separately.
+
+| Query | Top 3 (✓ relevant) | P@3 | RR |
+|---|---|---|---|
+| What did Bach do at CMHA? | ✓ cmha c3 `0.4842` · ✗ education c3 `0.4838` · ✗ about c0 `0.4764` | 1/3 | 1.0 |
+| What cloud work has Bach done with Azure? † | ✓ azure c2 `0.6544` · ✓ azure c0 `0.5505` · ✓ about c0 `0.5113` | 3/3 | 1.0 |
+| What is Bach researching? | ✗ education c3 `0.5124` · ✓ about c0 `0.4919` · ✗ about c4 `0.4778` | 1/3 | 0.5 |
+| When does Bach graduate? | ✓ education c3 `0.6820` · ✓ about c0 `0.5310` · ✗ about c4 `0.4600` | 2/3 | 1.0 |
+| What programming languages does Bach know? | ✗ about c0 `0.5005` · ✗ education c3 `0.4797` · ✗ about c4 `0.4313` | 0/3 | 0 |
+| Describe Bach's work at the Canadian Mental Health Association. | ✓ cmha c3 `0.5997` · ✓ cmha c2 `0.5249` · ✗ about c0 `0.4876` | 2/3 | 1.0 |
+| What cloud computing work has Bach done? | ✓ about c0 `0.5580` · ✓ azure c2 `0.5357` · ✗ about c4 `0.4647` | 2/3 | 1.0 |
+| What topic is Bach's undergraduate thesis focused on? | ✗ education c3 `0.5473` · ✓ about c0 `0.4752` · ✗ about c4 `0.4604` | 1/3 | 0.5 |
+| When is Bach expected to finish university? | ✓ education c3 `0.6880` · ✓ about c0 `0.4950` · ✗ about c4 `0.4285` | 2/3 | 1.0 |
+| Which coding languages can Bach use? | ✗ about c0 `0.4399` · ✗ education c3 `0.3994` · ✗ about c4 `0.3827` | 0/3 | 0 |
+
+Scores are cosine similarity; higher is better.
+
+| Metric | In-memory dense (published) | Cosmos DB dense, script as written | Cosmos DB dense, frozen benchmark |
+|---|---|---|---|
+| Recall@3 | 8/10 | 8/10 | 8/10 |
+| Precision@3 | 43% (13/30) | 47% (14/30) | 43% (13/30) |
+| MRR@3 | 0.700 | 0.700 | 0.700 |
+
+† **Why the script's precision is higher:** the script words the second question as *"What cloud work has Bach done with Azure?"* instead of the frozen benchmark's *"What Azure experience does Bach have?"*. The new wording pulls in one extra relevant chunk (3/3 instead of 2/3). That one extra chunk accounts for the whole difference; it is not an effect of Cosmos DB. With the original wording, Cosmos DB returns `about c0 0.6205 · azure c2 0.5897 · about c4 0.5165`, the same as in-memory, so all three metrics match the published dense numbers exactly (last column). To keep later comparisons valid, the script should use the frozen question.
+
+**Takeaways**
+
+- **The migration changed infrastructure, not retrieval behaviour.** The published Dense, BM25 and Hybrid results still hold for the Cosmos DB-backed pipeline.
+- **Dense retrieval's known failures carry over.** Both language questions still miss `about.txt` chunk 2 entirely, and the research questions still match only on the `about.txt` summary. Fixing those is a retrieval problem, and changing the vector store does not help.
+- This parity holds only because the index is `flat`. Switching to `quantizedFlat` or `diskANN` would make search approximate, so rerun this check after any index change.
+
+<details>
+<summary>Raw output (<code>python -m eval.eval_cosmos_dense</code>)</summary>
+
+```text
+======================================================================
+QUERY: What did Bach do at CMHA?
+1. ✓ cmha.txt chunk 3 score=0.4842
+2. ✗ education.txt chunk 3 score=0.4838
+3. ✗ about.txt chunk 0 score=0.4764
+Recall@3=1 | Precision@3=0.333 | MRR@3=1.000
+
+======================================================================
+QUERY: What cloud work has Bach done with Azure?
+1. ✓ azure.txt chunk 2 score=0.6544
+2. ✓ azure.txt chunk 0 score=0.5505
+3. ✓ about.txt chunk 0 score=0.5113
+Recall@3=1 | Precision@3=1.000 | MRR@3=1.000
+
+======================================================================
+QUERY: What is Bach researching?
+1. ✗ education.txt chunk 3 score=0.5124
+2. ✓ about.txt chunk 0 score=0.4919
+3. ✗ about.txt chunk 4 score=0.4778
+Recall@3=1 | Precision@3=0.333 | MRR@3=0.500
+
+======================================================================
+QUERY: When does Bach graduate?
+1. ✓ education.txt chunk 3 score=0.6820
+2. ✓ about.txt chunk 0 score=0.5310
+3. ✗ about.txt chunk 4 score=0.4600
+Recall@3=1 | Precision@3=0.667 | MRR@3=1.000
+
+======================================================================
+QUERY: What programming languages does Bach know?
+1. ✗ about.txt chunk 0 score=0.5005
+2. ✗ education.txt chunk 3 score=0.4797
+3. ✗ about.txt chunk 4 score=0.4313
+Recall@3=0 | Precision@3=0.000 | MRR@3=0.000
+
+======================================================================
+QUERY: Describe Bach's work at the Canadian Mental Health Association.
+1. ✓ cmha.txt chunk 3 score=0.5997
+2. ✓ cmha.txt chunk 2 score=0.5249
+3. ✗ about.txt chunk 0 score=0.4876
+Recall@3=1 | Precision@3=0.667 | MRR@3=1.000
+
+======================================================================
+QUERY: What cloud computing work has Bach done?
+1. ✓ about.txt chunk 0 score=0.5580
+2. ✓ azure.txt chunk 2 score=0.5357
+3. ✗ about.txt chunk 4 score=0.4647
+Recall@3=1 | Precision@3=0.667 | MRR@3=1.000
+
+======================================================================
+QUERY: What topic is Bach's undergraduate thesis focused on?
+1. ✗ education.txt chunk 3 score=0.5473
+2. ✓ about.txt chunk 0 score=0.4752
+3. ✗ about.txt chunk 4 score=0.4604
+Recall@3=1 | Precision@3=0.333 | MRR@3=0.500
+
+======================================================================
+QUERY: When is Bach expected to finish university?
+1. ✓ education.txt chunk 3 score=0.6880
+2. ✓ about.txt chunk 0 score=0.4950
+3. ✗ about.txt chunk 4 score=0.4285
+Recall@3=1 | Precision@3=0.667 | MRR@3=1.000
+
+======================================================================
+QUERY: Which coding languages can Bach use?
+1. ✗ about.txt chunk 0 score=0.4399
+2. ✗ education.txt chunk 3 score=0.3994
+3. ✗ about.txt chunk 4 score=0.3827
+Recall@3=0 | Precision@3=0.000 | MRR@3=0.000
+
+======================================================================
+COSMOS DENSE RESULTS
+Recall@3:    8/10 = 0.800
+Precision@3: 0.467
+MRR@3:       0.700
+```
+
+</details>
+
 ### End-to-end answer evaluation (legacy)
 
 **Script:** `app/src/run_eval.py`. **Output:** `eval/results.json`. It runs 8 questions (5 answerable, 3 that should be refused) through the **earlier** dense-only, free-text pipeline.
@@ -811,6 +956,7 @@ Each step changed **one variable** and was measured before moving on.
 | 8 | Frozen three-way eval + paraphrases | See [Retrieval evaluation](#retrieval-evaluation). |
 | 9 | Structured generation with evidence IDs | Invented citations (`【1†L7-L9】`) disappeared; the Google question returned `used_context: []`. |
 | 10 | Serving and deployment | FastAPI → Docker → Azure Container Apps; see [Deployment lessons learned](#deployment-lessons-learned). |
+| 11 | Dense retrieval on Cosmos DB vector search (`flat` index) | Identical top 3 and scores to in-memory search on all 10 frozen benchmark questions. The vector store changed nothing about retrieval quality; see the [parity check](#cosmos-db-dense-retrieval-parity-check). |
 
 ---
 
@@ -824,7 +970,7 @@ Each step changed **one variable** and was measured before moving on.
 
 **Candidate depth ≠ context size.** Searching 10 deep but sending 3 chunks lets fusion rescue evidence ranked 4–5 without inflating the prompt.
 
-**In-memory indexes, no vector database.** 33 chunks embed in seconds, and brute-force search is exact and instant. A vector store would add a service and a sync problem without improving quality. Revisit at thousands of chunks.
+**Knowledge base and dense search in Cosmos DB.** At 33 chunks, a vector store doesn't improve retrieval *quality*, because brute-force search is already exact. The move to Cosmos DB is about *operations*: content edits without image rebuilds, and no re-embedding of the corpus on every cold start. Cosmos DB's `flat` vector index keeps search exact, and the [parity check](#cosmos-db-dense-retrieval-parity-check) confirmed identical results. Full reasoning and the alternatives considered (Azure AI Search, Blob Storage, pgvector) are in [ADR 0001](docs/adr/0001-move-knowledge-base-to-cosmos-db.md).
 
 **Configuration from the environment.** The application reads `GROQ_API_KEY` from the process environment. A `.env` file is only a local-development convenience, loaded from one documented location.
 
@@ -838,10 +984,11 @@ Each step changed **one variable** and was measured before moving on.
 |---|---|
 | **Secrets** | `GROQ_API_KEY` lives in a Container Apps secret. `.env` is git-ignored and never copied into the image. The git history has been checked: `git grep -E 'gsk_[A-Za-z0-9]{20,}' $(git rev-list --all)` returns nothing. |
 | **Registry access** | Pulls use a managed identity with `AcrPull`; there are no registry credentials in the app. |
+| **Database access** | Cosmos DB uses Microsoft Entra ID (`DefaultAzureCredential`) and data-plane RBAC; no account keys in code or config. Local key auth is still enabled on the account. Once the app's identity has its role, consider disabling it (`disableLocalAuth`). |
 | **Input validation** | Questions are stripped and limited to 1–500 characters, which bounds prompt size and cost. |
 | **CORS** | Limited to the portfolio origin and the local dev server, `POST` only, no credentials. This does not authenticate non-browser clients. |
 | **Prompt injection** | The model has no tools and sees only public documents, so the impact is limited to an off-topic or wrong answer. Citations cannot be forged, because they come from `source_map`. |
-| **Data exposure** | Everything in `app/data/documents/` is treated as public. |
+| **Data exposure** | Everything in `app/data/documents/` and the Cosmos DB `content` container is treated as public. |
 | **Rate limiting** | None at the API layer yet, so abuse could exhaust the Groq quota. See [Roadmap](#roadmap). |
 | **Third parties** | Questions and retrieved context are sent to Groq for inference. |
 
@@ -855,7 +1002,7 @@ Each step changed **one variable** and was measured before moving on.
 | Retrieval latency | Milliseconds |
 | End-to-end latency | 0.4–1.3 s per question, dominated by the Groq call |
 | Peak memory after startup | About 600 MB (measured locally); production allocation is 2 GiB |
-| Cold start | Several seconds (model load + 33 embeddings), longer on a fresh container that downloads the model |
+| Cold start | Several seconds (model load + Cosmos DB document query + BM25 build), longer on a fresh container that downloads the model |
 | LLM calls | Exactly one per `/ask` |
 
 ---
@@ -884,18 +1031,22 @@ Each step changed **one variable** and was measured before moving on.
 
 - No automated tests, and no custom error handling (upstream failures surface as `500`).
 - No API rate limiting or authentication.
-- `load_chunks()` runs once per index, so documents are loaded twice at startup.
+- `load_chunks()` runs once per index, so the Cosmos DB documents query runs twice at startup.
+- The Cosmos DB migration isn't deployed yet. The next image won't start in Azure until the SDKs are in `requirements.txt` and the managed identity has Cosmos DB access ([details](docs/adr/0001-move-knowledge-base-to-cosmos-db.md#before-deploying-to-container-apps)).
+- Startup now depends on Cosmos DB being reachable, and the account (Central US) is in a different region from the app (Canada Central).
+- Deleting a `.txt` file doesn't remove its items from Cosmos DB, because the upload scripts only upsert.
 - The default PyTorch wheel pulls CUDA libraries on Linux, making the image several GB; a CPU-only wheel would shrink it substantially.
 
 ---
 
 ## Roadmap
 
-1. **Hardening:** map Groq failures to `502`/`503` with a friendly message; add rate limiting, a readiness probe and structured logging of latency and sources.
-2. **Testing and CI:** unit tests for `chunk_document`, `tokenize`, `reciprocal_rank_fusion` and `resolve_sources`; an API test with the LLM mocked; GitHub Actions to build and push the image on tag.
-3. **Startup and image size:** CPU-only PyTorch, and bake the embedding model into the image.
-4. **Evaluation:** grow to 50–100 questions across categories (direct, independently written paraphrases, multi-fact, vague, unanswerable, adversarial); add groundedness, citation-correctness, refusal-rate and latency metrics.
-5. **Retrieval** (only once the larger eval set exists): stemming, cross-encoder re-ranking, query rewriting, heading-aware chunking.
+1. **Finish the Cosmos DB migration:** add `azure-cosmos`/`azure-identity` to `requirements.txt`, grant the managed identity a data-plane role, set `AZURE_CLIENT_ID`, move `COSMOS_ENDPOINT` to an env var, then measure per-request latency of the cross-region vector query ([ADR 0001](docs/adr/0001-move-knowledge-base-to-cosmos-db.md#migration-status)).
+2. **Hardening:** map Groq failures to `502`/`503` with a friendly message; add rate limiting, a readiness probe and structured logging of latency and sources.
+3. **Testing and CI:** unit tests for `chunk_document`, `tokenize`, `reciprocal_rank_fusion` and `resolve_sources`; an API test with the LLM mocked; GitHub Actions to build and push the image on tag.
+4. **Startup and image size:** CPU-only PyTorch, and bake the embedding model into the image.
+5. **Evaluation:** grow to 50–100 questions across categories (direct, independently written paraphrases, multi-fact, vague, unanswerable, adversarial); add groundedness, citation-correctness, refusal-rate and latency metrics.
+6. **Retrieval** (only once the larger eval set exists): stemming, cross-encoder re-ranking, query rewriting, heading-aware chunking.
 
 ---
 
@@ -914,6 +1065,10 @@ Each step changed **one variable** and was measured before moving on.
 | Revision unhealthy / restarting | Usually memory. Allocate 1 vCPU / 2 GiB. |
 | First request after idle is slow | Cold start from scale-to-zero. Set `--min-replicas 1` to keep a replica warm. |
 | Eval relevance looks wrong after editing a document | Chunk IDs shifted; re-check the labels in `src/eval_retrieval.py`. |
+| `ModuleNotFoundError: No module named 'azure'` (container) | `azure-cosmos` and `azure-identity` are missing from `app/requirements.txt`. Add them and rebuild. |
+| `DefaultAzureCredential failed to retrieve a token` | Locally: run `az login`. In Azure: set `AZURE_CLIENT_ID` to the user-assigned identity's client ID. |
+| Cosmos DB `403 Forbidden` (`does not have required RBAC permissions`) | The identity has no data-plane role. Use `az cosmosdb sql role assignment create`; see [ADR 0001](docs/adr/0001-move-knowledge-base-to-cosmos-db.md#before-deploying-to-container-apps). |
+| A deleted document still shows up in answers | The upload scripts only upsert. Delete its item from the `content` container (and its chunks from `chunks`), then restart the app. |
 
 ---
 
