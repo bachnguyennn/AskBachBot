@@ -1,0 +1,26 @@
+CHEST X-RAY PNEUMONIA DETECTION PROJECT — BACH NGUYEN
+
+CHEST X-RAY PNEUMONIA PROJECT: OVERVIEW AND QUESTION
+Year: 2025. Domain: medical computer vision / deep learning. Tools: PyTorch, torchvision, ResNet50, pytorch-grad-cam, scikit-learn, Gradio. GitHub: github.com/bachnguyennn/Chest_X-Pneumonia-Detection.
+Bach built an interpretable pneumonia screener for chest X-rays. The framing was not "what is the highest accuracy?" but "if this were a real screening tool, what kind of mistake is acceptable?" In screening, a missed pneumonia case (false negative) is far more dangerous than a false alarm (false positive), so the goal was a model that catches almost every case, is honest about its false alarms, and shows where it is looking. It is a research and education prototype, not a clinical device.
+
+CHEST X-RAY PNEUMONIA PROJECT: THE PEDIATRIC X-RAY DATASET
+Data: the Kaggle pediatric chest X-ray dataset from Guangzhou Women and Children's Medical Center. Two observations from exploration set the design:
+1. Class imbalance: there are far more pneumonia images than normal ones, so a model that always guesses "pneumonia" scores deceptively well on accuracy. Accuracy was ruled out as the headline metric in favour of recall and precision-recall.
+2. Image variation: contrast, patient positioning, and artifacts vary, and normal anatomy can look like opacity. That is exactly what tempts a model to learn the wrong cue, such as a text label in the corner or the image border, instead of the lungs, so Bach needed a way to see what the model attends to.
+
+CHEST X-RAY PNEUMONIA PROJECT: RESNET50 MODEL AND TRAINING
+- Backbone: ResNet50 with ImageNet transfer learning, chosen for strong features, stable training, and a clean final convolutional block that works well for class-activation maps.
+- Class imbalance: weighted random sampling plus weighted cross-entropy loss, so the minority "normal" class is not drowned out.
+- Training schedule: freeze the backbone and train the classification head first, then fine-tune later layers.
+- Checkpointing: the best model is saved by validation F1 score, not accuracy.
+- Deliberate tradeoff: the model is tuned toward high pneumonia recall (sensitivity), accepting more false positives, which is the right error for a screening tool.
+
+CHEST X-RAY PNEUMONIA PROJECT: GRAD-CAM EXPLAINABILITY
+Trust was a core requirement. Bach added Grad-CAM (gradient-weighted class activation mapping) and Eigen-CAM overlays, so every prediction comes with a heatmap showing which regions of the X-ray the evidence came from. The overlays put the original X-ray next to gradient-based and activation-based evidence maps, which lets a reviewer check that the model is looking at the lungs rather than cheating with shortcuts like labels, borders, or positioning markers.
+A Gradio web demo lets a user upload a chest X-ray and see the prediction together with its explanation heatmap. Bach treats explainability as part of model validation, not decoration.
+
+CHEST X-RAY PNEUMONIA PROJECT: RESULTS AND TAKEAWAYS
+Results on the held-out test split: 96.9% pneumonia recall, 90.4% accuracy, 96.5% ROC-AUC, and 97.5% PR-AUC. The confusion matrix shows the intended tradeoff: only 12 missed pneumonia cases (false negatives) at the cost of 48 false alarms (normal images flagged).
+Bach documented the failure cases, the 12 false negatives and 48 false positives, because in medical AI those are the most important images to study and they show where the model would be unreliable.
+Takeaway: defining the right error before training mattered more than any architecture choice. The model behaves like a screener should, with high sensitivity and its reasoning on display, and it is explicitly not validated for clinical diagnosis.

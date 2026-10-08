@@ -1,0 +1,30 @@
+HOSPITAL READMISSION RISK MODEL PROJECT — BACH NGUYEN
+
+HOSPITAL READMISSION PROJECT: OVERVIEW AND QUESTION
+Year: 2025. Domain: clinical machine learning / healthcare ML. Role: Builder. Tools: Python, XGBoost, LightGBM, scikit-learn, Optuna, SHAP, SMOTE. GitHub: github.com/bachnguyennn/Hospital_Readmission_prediction.
+Question: can Bach predict which diabetic patients will be readmitted to hospital within 30 days, in a way that would hold up in the real world? A 30-day readmission usually means something was missed at discharge, so hospitals want to flag high-risk patients early. The project is less about chasing a big number and more about not fooling yourself, because clinical data makes leakage and inflated scores very easy.
+
+HOSPITAL READMISSION PROJECT: THE DIABETES DATASET AND ITS PITFALLS
+Data: the UCI "Diabetes 130-US hospitals, 1999-2008" dataset, about 100,000 patient encounters with 50+ clinical features. Three findings from exploratory data analysis shaped the whole project:
+1. Severe class imbalance: only about 9% of patients are readmitted within 30 days, so a model that predicts "no one comes back" is 91% accurate and completely useless.
+2. Repeated patients: the same patient appears in multiple encounters, so a naive random split would let the model remember patients and inflate its score.
+3. Messy, high-cardinality fields: diagnosis codes and medication columns with many missing values.
+
+HOSPITAL READMISSION PROJECT: LEAKAGE-FREE METHODOLOGY
+- Temporal validation: encounters sorted chronologically, with the last 20% held out as the test set, mirroring deployment (train on the past, predict the future).
+- First-encounter deduplication: only each patient's first visit is kept, so no patient appears in both train and test.
+- AUPRC (area under the precision-recall curve) as the headline metric, because with 9% positives accuracy and ROC-AUC are overly flattering.
+- Clinical features such as prior admissions, total medications, and labs per day.
+- Models: XGBoost, LightGBM, and a logistic-regression baseline, tuned with Optuna, with SMOTE oversampling and class weighting for the imbalance.
+
+HOSPITAL READMISSION PROJECT: RESULTS AND SHAP EXPLANATIONS
+Results on the temporal hold-out set:
+- XGBoost: AUPRC 0.128, AUROC 0.634, F1 0.168 (best model).
+- LightGBM: AUPRC 0.120, AUROC 0.621, F1 0.164.
+- Logistic regression baseline: AUPRC 0.100, AUROC 0.603, F1 0.150.
+The gradient-boosted tree models beat the linear baseline on every metric, with XGBoost improving AUPRC by about 28% over logistic regression. For context, a random classifier's AUPRC equals the positive rate, about 0.09, so the models add real but limited signal.
+SHAP (SHapley Additive exPlanations) analysis made the model interpretable for a clinical audience: the strongest drivers of readmission risk were admission complexity, prior admissions, and total medications, which line up with clinical intuition.
+
+HOSPITAL READMISSION PROJECT: TAKEAWAYS AND NEXT STEPS
+The numbers are modest because this is a famously hard benchmark once leakage is removed; many published attempts get higher scores from leaky splits. Bach would rather report a real 0.128 than a leaky, inflated 0.4. The methodology is the project: temporal splits, patient deduplication, and AUPRC-first evaluation are what make the result trustworthy.
+Next steps Bach identified: survival analysis (predicting time to readmission instead of a binary flag) and a fairness audit across demographic groups before anything like this went near a real clinical workflow.

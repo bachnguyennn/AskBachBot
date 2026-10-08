@@ -1,0 +1,46 @@
+ASK BACH PROJECT — CLOUD-NATIVE RAG CHATBOT AND DYNAMIC PORTFOLIO
+
+PROJECT OVERVIEW: WHAT ASK BACH IS
+Ask Bach is a cloud-native retrieval-augmented generation (RAG) chatbot that Bach Nguyen designed, built, and deployed into Bach's personal portfolio website. Visitors and recruiters can ask natural-language questions about Bach's education, technical skills, work experience, research, and projects, and get grounded answers with source references. Bach built every layer: document ingestion, text chunking, vector embeddings, semantic search, BM25 keyword search, hybrid ranking, LLM generation, structured citations, retrieval evaluation, a REST API, Docker containerization, Azure cloud deployment, and front-end integration. Year: 2026. Domain: LLM applications / RAG / cloud engineering. GitHub: github.com/bachnguyennn.
+
+ASK BACH ARCHITECTURE AND TECH STACK
+Tech stack: Python, FastAPI, Sentence Transformers (all-MiniLM-L6-v2), BM25, Azure Cosmos DB for NoSQL with vector search, Groq API (openai/gpt-oss-120b), Docker, Azure Container Registry (ACR), Azure Container Apps, Microsoft Entra managed identity, and an Astro front end hosted on GitHub Pages.
+Request flow: the Astro portfolio sends the visitor's question over HTTPS to the FastAPI backend (POST /ask). The backend runs hybrid retrieval over chunks stored in Cosmos DB, builds a structured context from the top-ranked chunks, calls the Groq-hosted LLM for a grounded answer, validates the structured output, and returns the answer together with its source documents. The frontend and backend are separated: the browser never sees API keys or database credentials.
+
+ASK BACH DOCUMENT PIPELINE: CHUNKING AND VECTOR EMBEDDINGS
+Ask Bach's knowledge base lives in Azure Cosmos DB for NoSQL. A document-processing pipeline loads the knowledge-base documents from Cosmos DB, splits each document into smaller paragraph-based chunks, and assigns each chunk a source identifier and a chunk ID. Each chunk is embedded with the all-MiniLM-L6-v2 sentence-transformer model into a 384-dimensional vector embedding. The chunks and their embeddings are indexed in a vector-indexed Cosmos DB container, and semantic (dense) search uses Cosmos DB's native vector search with cosine similarity (VectorDistance). User questions are embedded with the same model so they can be compared against the chunk vectors.
+
+ASK BACH HYBRID RETRIEVAL: BM25 + VECTOR SEARCH WITH RECIPROCAL RANK FUSION
+Semantic similarity alone can miss exact technical terms, names, and acronyms, so Bach added BM25 keyword-based (lexical) retrieval alongside dense vector search. The two ranked lists are merged with Reciprocal Rank Fusion (RRF), which combines results by rank rather than by raw score, so dense cosine scores and BM25 scores do not need to be on the same scale. The result is a hybrid retrieval system that handles both specific technical keywords (for example "CMHA" or "Power Automate") and paraphrased, semantically related questions. The configuration is frozen: 10 candidates from each retriever, RRF constant k = 60, and the top 3 fused chunks are passed to the language model.
+
+ASK BACH GENERATION, STRUCTURED OUTPUT, AND SOURCE CITATIONS
+The highest-ranked chunks are assembled into a structured context and sent to the Groq-hosted openai/gpt-oss-120b large language model, which must answer only from that context. Generation is constrained to structured JSON output: the model returns its answer plus the integer IDs of the evidence it used, not free-text citations. The FastAPI backend validates that output and maps the evidence IDs back to the original source documents and chunk IDs in Python, so the model cannot fabricate a citation. When the knowledge base does not contain the answer, Ask Bach declines ("I don't have enough information to answer") and returns no sources, which reduces hallucinations and unsupported claims.
+
+ASK BACH RETRIEVAL EVALUATION: RECALL@3, PRECISION@3, MRR@3
+Bach built an evaluation framework that measures retrieval independently of generation. It uses labeled questions, each with a set of relevant chunks, plus paraphrased versions of each question to test robustness to wording. Metrics: Recall@3 (hit rate), Precision@3, and Mean Reciprocal Rank (MRR@3). Bach compared dense-only retrieval against hybrid retrieval, and compared results before and after the migration to Cosmos DB. On the initial 10-question evaluation set (5 original questions and 5 paraphrases), hybrid retrieval achieved 100% Recall@3, 70% Precision@3, and 0.95 MRR@3, outperforming dense-only retrieval, and the hybrid metrics stayed the same after the cloud migration. Bach notes that this is a small test set, so the numbers are indicative rather than conclusive.
+
+ASK BACH CLOUD DEPLOYMENT: DOCKER, AZURE CONTAINER REGISTRY, AZURE CONTAINER APPS
+Bach containerized the FastAPI application with Docker, building Linux AMD64 (linux/amd64) images so they run on Azure even when built on an Apple Silicon Mac. Versioned images are pushed to Azure Container Registry (ACR) and deployed to Azure Container Apps, which serves the API publicly over HTTPS. Configuration is supplied through environment variables and Azure-managed secrets (such as the Groq API key) rather than being baked into the image. Bach also debugged the live production deployment on Azure.
+
+ASK BACH SECURITY: MANAGED IDENTITY, COSMOS DB RBAC, SECRETS, AND CORS
+Ask Bach accesses Azure Cosmos DB without storing any Cosmos DB keys or connection strings in application code. Bach configured a Microsoft Entra managed identity for the Azure Container App and granted it Azure Cosmos DB role-based access control (RBAC) permissions; the Python backend authenticates with DefaultAzureCredential. The Groq API key is stored as an Azure-managed secret and exposed to the container only as an environment variable, never to the browser. Cross-Origin Resource Sharing (CORS) is restricted to Bach's portfolio domain so only the portfolio site can call the API from a browser. Bach learned to keep credentials server-side and to separate frontend and backend responsibilities.
+
+ASK BACH DYNAMIC PORTFOLIO CONTENT API (COSMOS DB + ASTRO)
+Bach extended Ask Bach beyond the chatbot with a Cosmos DB-backed portfolio content API. The FastAPI endpoint /content/experience serves structured work-experience records (organization, role, period, highlights, technologies) from Cosmos DB, filtered so only records marked public are returned. The Astro portfolio on GitHub Pages fetches these records in the browser and matches them to experience cards by ID, updating the cards dynamically. If the API is unavailable, the site falls back to static content, so the page never breaks. As a result, editing a published experience record in Cosmos DB updates the live portfolio on the next page refresh, without rebuilding or redeploying the GitHub Pages site.
+
+ASK BACH LESSONS LEARNED AND SKILLS GAINED
+Skills Bach gained from building Ask Bach: RAG architecture, text chunking, vector embeddings, semantic search, lexical (BM25) search, hybrid retrieval with Reciprocal Rank Fusion, retrieval evaluation, LLM integration, structured output validation, REST API development with FastAPI, NoSQL database modeling in Cosmos DB, Azure authentication with managed identity and RBAC, Docker containerization, cloud deployment on Azure Container Apps, browser-side data fetching, and production debugging.
+Key lessons: separate frontend and backend responsibilities; never expose API credentials to the browser; evaluate retrieval independently from generation; keep source references consistent between the index and the citations; and design cloud applications to degrade gracefully when a dependency fails.
+
+ASK BACH NEXT STEPS: INCREMENTAL INDEXING WITH THE COSMOS DB CHANGE FEED (PLANNED)
+Bach's next planned improvement for Ask Bach is an incremental indexing pipeline built on the Azure Cosmos DB change feed. When a structured portfolio record (for example an experience entry) is updated, the change feed would trigger re-chunking and re-embedding of only the affected content, automatically refreshing the chatbot's vector embeddings and BM25 search index so the chatbot and the website always show the same information. This change-feed synchronization is planned and is not implemented in the current version; today the chunks are re-indexed by running an offline indexing script.
+
+QUICK FACTS ABOUT ASK BACH (FOR COMMON QUESTIONS)
+- What is Ask Bach? A RAG chatbot on Bach's portfolio that answers questions about Bach, with source citations.
+- Which LLM does it use? openai/gpt-oss-120b, hosted on Groq.
+- Which embedding model? all-MiniLM-L6-v2 (384-dimensional embeddings).
+- Which database? Azure Cosmos DB for NoSQL with native vector search.
+- How is retrieval done? Hybrid: BM25 + vector search, merged with Reciprocal Rank Fusion.
+- Where is it deployed? Docker image in Azure Container Registry, running on Azure Container Apps; the front end is Astro on GitHub Pages.
+- How are credentials handled? Managed identity + Cosmos DB RBAC (no database keys in code); Groq key as an Azure secret.
+- Results: 100% Recall@3, 70% Precision@3, 0.95 MRR@3 for hybrid retrieval on a 10-question set.

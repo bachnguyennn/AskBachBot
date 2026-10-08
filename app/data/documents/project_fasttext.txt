@@ -1,0 +1,25 @@
+FASTTEXT SUBWORD EMBEDDINGS FROM SCRATCH PROJECT — BACH NGUYEN
+
+FASTTEXT EMBEDDINGS PROJECT: OVERVIEW AND QUESTION
+Year: 2025. Domain: natural language processing (NLP) / representation learning / word embeddings. Tools: PyTorch (Apple MPS), Gensim (baselines only), scikit-learn, t-SNE. GitHub: github.com/bachnguyennn/Fast-Text-Embedding-System.
+Most people use word embeddings; far fewer can explain why they work. Bach built word vectors from absolute scratch (no gensim.load()) to answer a concrete question: does FastText's big idea, breaking words into character n-grams, actually beat plain Skip-Gram word2vec when both are trained under identical conditions? Bach also benchmarked the home-grown models against official pretrained embeddings and reported the gap honestly.
+
+FASTTEXT EMBEDDINGS PROJECT: TEXT8 DATA AND SUBWORD N-GRAMS
+Data: text8, the first 100 MB of Wikipedia, about 17 million tokens. The vocabulary is Zipfian: a handful of words appear constantly and a huge tail appears only a few times, so Bach applied frequency subsampling so the model does not waste capacity on words like "the" and "of".
+Splitting words into character n-grams of 3 to 6 characters produced about 333,000 unique subword n-grams, far more than the 71,000-word vocabulary. That is the cost of subwords, and the experiment had to show it was worth paying. FastText wraps each word in boundary markers (where becomes <where>) so prefix and suffix n-grams differ from interior ones; otherwise "her" inside "where" would collide with "there" and "other".
+
+FASTTEXT EMBEDDINGS PROJECT: IMPLEMENTATION AND CONTROLLED EXPERIMENT
+Bach implemented the full stack from scratch so a single token can be traced end to end: tokenizer, subword hashing, Skip-Gram with negative sampling, training on Apple Silicon (MPS), export to .vec format, and the same evaluation scripts used for the baselines.
+The key experiment was a controlled A/B comparison: Skip-Gram vs FastText with identical settings (300 dimensions, 10 epochs, same corpus), and both trained cleanly to convergence. Evaluation used the WordSim-353 word-similarity benchmark (Spearman correlation), the Google word-analogy task, vocabulary coverage, nearest-neighbour inspection, and t-SNE projections of the learned vectors.
+
+FASTTEXT EMBEDDINGS PROJECT: RESULTS
+Results (WordSim-353 correlation / analogy accuracy / coverage):
+- Bach's Skip-Gram: 0.60 / 8.3% / 99.4%.
+- Bach's FastText: 0.56 / 11.3% / 100%.
+- Official pretrained FastText: 0.70 / 71.3% / 100%.
+- GloVe 300d: 0.61 / 71.7% / 100%.
+Subwords did not win every metric. They paid off specifically on coverage (every test word gets a vector, even unseen words) and morphology: FastText's nearest neighbours cluster word forms that share stems and affixes, and t-SNE shows real lexical structure emerging from scratch.
+
+FASTTEXT EMBEDDINGS PROJECT: THE GAP TO PRETRAINED MODELS AND TAKEAWAYS
+The honest gap is the analogy score: about 11% for Bach's models vs about 71% for official pretrained vectors. That gap is about data scale, since text8 is tiny compared with the web-scale corpora used for official FastText and GloVe, not an implementation bug. Bach verified this by running the official pretrained models through the exact same evaluation scripts, which produced the strong pretrained scores above.
+Takeaway: the claim is not a leaderboard number. It is that Bach can implement a paper correctly, design a controlled experiment, and interpret the result, including being clear that the gap to pretrained models is a data-budget story.

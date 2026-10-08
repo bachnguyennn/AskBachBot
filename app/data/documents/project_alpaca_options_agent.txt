@@ -1,0 +1,37 @@
+ALPACA OPTIONS ALPHA AGENT PROJECT — BACH NGUYEN
+
+ALPACA OPTIONS AGENT PROJECT: OVERVIEW
+Year: 2026 (September). Domain: quantitative finance / AI agents / algorithmic options trading. Tools: Python, Alpaca Trading API (alpaca-py), the official Alpaca MCP server (Model Context Protocol), Anthropic Claude API, Black-Scholes pricing, httpx, rich. GitHub: github.com/bachnguyennn/Alpaca.
+The Alpaca Options Alpha Agent is an autonomous options-trading agent that runs on paper trading only, never real money. It sells short-dated, defined-risk vertical credit spreads on liquid index ETFs (SPY and QQQ), and only when the premium on offer is richer than the spread is worth under recent realized volatility. An LLM classifies the market regime, while a deterministic engine makes every decision that touches money.
+
+ALPACA OPTIONS AGENT PROJECT: THE VOLATILITY EDGE
+The trading idea behind the Alpaca agent is the gap between implied and realized volatility. Implied volatility had been running well above realized volatility:
+- SPY: 20-day realized volatility 9.1% vs 13.5% at-the-money implied volatility, a +4.4 point gap.
+- QQQ: 20-day realized volatility 16.9% vs 19.2% implied volatility, a +2.3 point gap.
+Option sellers were being paid for movement the market was not delivering. The agent monetizes that gap directly, measuring it on every candidate trade, rather than assuming the edge exists. This is often called the volatility risk premium.
+
+ALPACA OPTIONS AGENT PROJECT: EXPECTED VALUE UNDER REALIZED VOLATILITY, NOT DELTA
+The obvious rule, "sell 0.16-delta spreads and collect premium", is worthless, because delta is the risk-neutral probability: price a spread with implied volatility and its expected value collapses to zero by construction, so any edge measured that way is bid/ask noise.
+Instead the agent prices every candidate under realized volatility: EV = credit - [BS(K_short, sigma = RV) - BS(K_long, sigma = RV)], where BS is the Black-Scholes price, and requires at least $5 per contract of edge. Example: on a 0.175-delta SPY call spread, delta implies a 17.5% chance of finishing in the money, while the realized-vol model says 12.2%; that gap is the trade. The gate is self-disarming: when realized volatility rises to meet implied, EV falls to zero and the agent stops trading on its own.
+
+ALPACA OPTIONS AGENT PROJECT: ARCHITECTURE (CLAUDE REGIME CLASSIFIER)
+The design deliberately limits what the LLM can do. Every 30 minutes, Claude answers one narrow question: which market regime are we in, and which side is safe to sell? The regimes are CALM (put and call credit spreads allowed), TRENDING_UP (put credit spreads only), TRENDING_DOWN (call credit spreads only), and STRESS (no new trades, capital preservation).
+Claude never emits an order. A deterministic engine handles strike selection, the EV gate, risk gates, position sizing, and order placement. If the model is unavailable or returns anything unexpected, a rules-based classifier takes over and the agent keeps trading, so the Anthropic API key is optional. This is a pattern of using an LLM for judgment while keeping money-moving logic deterministic.
+
+ALPACA OPTIONS AGENT PROJECT: RISK GATES
+Every order must clear all of these risk gates in order, and every rejection is journaled with its reason, so the record shows the gates working, not just the fills:
+- Kill switch that halts all new risk.
+- Daily loss breaker at -3% of session-start equity.
+- At most 8 concurrent spreads.
+- Max loss per trade of at most 1% of equity, which sets the contract count.
+- Expected value of at least $5 per contract at realized volatility.
+- Liquidity: bid/ask at most 8% of mid and open interest of at least 250 on both legs.
+- No new positions within 20 minutes of the closing bell, and never re-opening a leg already held.
+
+ALPACA OPTIONS AGENT PROJECT: KNOWN RISK AND CODE STRUCTURE
+Known risk, stated openly: selling premium is "picking up pennies in front of a steamroller". A single gap through a short strike erases many wins. Every position is a vertical spread, so the long wing caps the loss per trade, and the 1% sizing rule caps it per portfolio, but returns are genuinely skewed: many small wins and occasional full-width losses.
+Code structure: config (risk limits as one source of truth), a broker wrapper that is the only code talking to Alpaca, signals (realized vol, implied vol, drift), regime, strategy (vertical spread construction), ev (realized-vol pricing), risk (the gates), the autonomous runner loop, and an append-only decision journal.
+
+ALPACA OPTIONS AGENT PROJECT: MCP SERVER AND IMPLEMENTATION DETAILS
+The agent reaches Alpaca through the official Alpaca MCP server (alpaca-mcp-server v2.3.0) over stdio, with credentials loaded from a .env file so no secret is written into a config file. Toolsets used: account, trading, assets, options data, stock data, and market data.
+Two Alpaca details Bach verified against the live API: multi-leg limit prices are signed (a negative limit price means a net credit, and the broker wrapper forces the sign so callers cannot get it backwards), and open interest only exists on the trading API's contract record, not the options chain snapshot, so the liquidity gate joins both endpoints. The agent has preflight, dry-run, single-cycle, and self-test modes, plus unit tests for the pricing and probability maths.

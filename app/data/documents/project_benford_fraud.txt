@@ -1,0 +1,32 @@
+BENFORD'S LAW FRAUD DETECTION FROM SEC FILINGS PROJECT — BACH NGUYEN
+
+BENFORD FRAUD DETECTION PROJECT: OVERVIEW
+Year: 2026 (May). Domain: fraud detection / forensic accounting / machine learning on financial data. Tools: Python, XGBoost, LightGBM, scikit-learn, Isolation Forest, SHAP, Optuna, SMOTE / ADASYN, SEC EDGAR, XBRL, Jupyter. GitHub: github.com/bachnguyennn/Benford-Law-Fraud-Detection.
+This project extracts numeric patterns from raw SEC 10-K annual filings, engineers Benford's Law deviation features, and trains an XGBoost / LightGBM ensemble with SHAP explanations to flag companies at risk of accounting fraud. A companion Jupyter notebook is the main narrative report, covering exploratory analysis, the model, SHAP explanations, and limitations.
+
+BENFORD FRAUD DETECTION PROJECT: WHAT BENFORD'S LAW IS
+Benford's Law says that in many naturally occurring datasets, such as financial statement figures, the leading digit is not uniform: it is 1 about 30% of the time and 9 less than 5% of the time, following a logarithmic curve. A clean company's first-digit frequencies align tightly with the expected curve, while companies that manipulate their financials often deviate from it, because invented numbers tend not to follow the natural distribution.
+Bach's project turns that idea into machine-learning features, measuring how far each filing's digit distribution deviates from Benford's expected frequencies, and combines them with classic accounting red-flag ratios.
+
+BENFORD FRAUD DETECTION PROJECT: SEC EDGAR DATA ACQUISITION
+- A rate-limited SEC EDGAR downloader fetches 10-K filings and builds a manifest with fraud labels, respecting SEC fair-access rules. The required User-Agent contact identity is read from environment variables and never committed to code.
+- Fraud labels come from 70+ confirmed fraud companies sourced from SEC AAER (Accounting and Auditing Enforcement Releases), filtered to their fraud periods.
+- An optional large-panel benchmark uses the JAR 2020 dataset (Journal of Accounting Research replication data), about 146,000 firm-years from 1991-2014 with AAER labels.
+The pipeline runs in reproducible stages (download, parse, Benford features, Beneish ratios, train), and raw filings and processed CSVs are regenerated rather than committed.
+
+BENFORD FRAUD DETECTION PROJECT: FEATURE ENGINEERING
+- Dual-mode filing parser: XBRL tags for filings from 2009 onward, with an HTML fallback for pre-XBRL filings (Enron- and WorldCom-era fraud cases).
+- Benford's Law features: 23 deviation features per filing, including mean absolute deviation (MAD), chi-squared statistics, per-digit z-scores, and a round-number ratio.
+- Beneish M-Score: the classic earnings-manipulation score (Beneish, 1999) and its components, plus supplementary financial ratios.
+- Honest missing-data handling: pre-2009 fraud filings have no XBRL tags while modern clean filings do, so Bach added an explicit is_xbrl indicator and per-ratio ratio_missing flags instead of letting median imputation silently blur "missing" with "average".
+
+BENFORD FRAUD DETECTION PROJECT: MODELLING METHODOLOGY
+Fraud is rare (about 2% of filings), so the methodology is built for severe class imbalance:
+- AUPRC as the primary metric, because ROC-AUC is optimistic on imbalanced data and investigators work at a high-precision operating point.
+- Company-grouped train/test splits: all of a company's filings go entirely into train or test, so the model cannot memorize a company's reporting style.
+- Temporal walk-forward cross-validation on the JAR 2020 panel (1996-2014), with no look-ahead bias.
+- SMOTE / ADASYN oversampling with a graceful fallback, an Isolation Forest unsupervised baseline, and Optuna tuning with saved trial history.
+
+BENFORD FRAUD DETECTION PROJECT: RESULTS AND HONEST SCOPE
+Results are reported in the companion notebook as grouped-validation AUPRC and lift over a random baseline, with a precision-recall curve and a SHAP summary plot. SHAP shows the most predictive features include Benford MAD and Beneish M-Score components. Exact figures depend on which filings are sampled and the random split, so Bach documents how to regenerate the data and reproduce the numbers rather than quoting a single fixed score.
+Honest scope: Benford features alone are a screening and prioritization signal for investigators, not a courtroom-ready fraud detector. The project's value is rigorous ML methodology on a difficult, imbalanced, real-world dataset.

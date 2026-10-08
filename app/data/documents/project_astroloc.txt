@@ -1,0 +1,26 @@
+ASTROLOC-ML DEEP-LEARNING PLATE SOLVER PROJECT — BACH NGUYEN
+
+ASTROLOC-ML PROJECT: OVERVIEW AND QUESTION
+Year: 2025. Domain: deep learning / computer vision / astronomy. Tools: PyTorch, EfficientNet-B0, OpenCV, NumPy, gnomonic projection. GitHub: github.com/bachnguyennn/astro-ml.
+"Plate solving" means looking at a photo of the night sky and working out exactly where the camera was pointing: its right ascension, declination, rotation, and field of view. Classical solvers do this by matching star patterns. Bach asked a research question: can a convolutional neural network (CNN) learn to plate-solve end to end, straight from raw pixels? Bach committed up front to reporting the real outcome, good or bad, and to learning where deep learning helps and where it does not.
+
+ASTROLOC-ML PROJECT: SYNTHETIC STAR-FIELD DATA PIPELINE
+Real labelled night-sky images are scarce, so Bach built a synthetic data pipeline from the HYG star catalogue (about 41,500 stars). Exploring the catalogue was half the project: stars are not evenly spread (the Milky Way band and catalogue depth create structure across the sky), and star brightness follows a steep distribution, with a few bright anchors and many faint stars, which determines what is visible in each frame.
+Training images were rendered with gnomonic (tangent-plane) projection, the geometrically correct projection for a small field of view, by splatting magnitude-weighted Gaussian star blobs and adding realistic photon noise and read noise.
+
+ASTROLOC-ML PROJECT: MODEL DESIGN (SIN/COS ANGLES, EFFICIENTNET)
+The most interesting design problem was the output. Regressing raw angles failed badly: angles wrap around (359 degrees and 1 degree are neighbours), so the loss had a discontinuity and the network predicted nonsense such as RA = -117 degrees. The fix, standard for any rotational or spherical target, was to predict (sin, cos) pairs and reconstruct each angle with atan2, making the loss landscape smooth.
+Bach paired this with a three-phase transfer-learning schedule on an EfficientNet-B0 backbone: train the head, unfreeze later blocks, then an optional fine-tune on real images. Bach also built the classical triangle-hash solver, the asterism-matching approach used by Astrometry.net, as the baseline.
+
+ASTROLOC-ML PROJECT: RESULTS (A CLEAN NEGATIVE RESULT)
+Training loss fell smoothly, but angular error barely moved:
+- Fast run, 5,000 training samples: best angular error 65.6 degrees, 1.7% of predictions within 5 degrees.
+- Standard sin/cos run, 20,000 samples: best angular error 76.6 degrees, 0.2% within 5 degrees.
+A random guess on a sphere averages about 90 degrees of error, so the CNN was barely better than random. When the model's predicted sky position is overlaid on the real stars, they simply do not line up. Meanwhile the classical triangle-hash plate solver works. Bach reported this as a clean negative result rather than hiding it.
+
+ASTROLOC-ML PROJECT: WHY DEEP LEARNING FAILED AND TAKEAWAYS
+Digging into why it failed was the real payoff. Three causes converged:
+1. ImageNet features do not transfer to star fields: dots on a black background are wildly out of distribution for a model pretrained on everyday photos.
+2. 20,000 synthetic samples is not nearly enough data for a 5-million-parameter model.
+3. Most fundamentally, plate solving is a geometric-matching problem, not a feature-learning problem. Recognising a star pattern and triangulating from it is exactly what classical asterism matching does well and what a generic CNN does poorly.
+Takeaway: knowing when not to reach for deep learning is itself a skill, and a clean negative result with a clear explanation is worth more than a vague positive one.

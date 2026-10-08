@@ -1,0 +1,58 @@
+CViT-CPG CONTINUAL LEARNING RESEARCH PROJECT — BACH NGUYEN
+
+CViT-CPG PROJECT: OVERVIEW
+Year: 2026 (technical report dated July 2026). Domain: continual learning / efficient vision transformers / computer vision research. Tools: Python, PyTorch 2.6 with CUDA, a single NVIDIA RTX 3060 GPU. GitHub: github.com/bachnguyennn/CPG_vclab.
+In this research project Bach ported the CPG continual-learning method (Compacting, Picking and Growing; Hung et al., NeurIPS 2019) from its original VGG16 backbone onto the CascadedViT (CViT) family of efficient hybrid vision transformers, and measured the accuracy-per-compute trade-off on the standard 20-task CIFAR-100 benchmark. One-line result: CPG on CascadedViT forgets exactly nothing, verified to the bit, while matching the original paper's accuracy at 5-32x fewer inference FLOPs. It connects to Bach's thesis research in the Visual Computing Lab (research.txt).
+
+CViT-CPG PROJECT: RESEARCH QUESTIONS
+Bach structured the CViT-CPG work around three research questions:
+- RQ1 (mechanism transfer): does CPG's weight-ownership masking, designed for plain convolutional networks, still give exact zero forgetting on a modern hybrid vision transformer with depthwise convolutions, squeeze-and-excitation modules, cascaded group attention, and chunked feed-forward layers?
+- RQ2 (efficiency retention): CascadedViT has about 38x fewer FLOPs than VGG16. Does porting CPG onto it cost continual-learning accuracy, or does accuracy parity survive?
+- RQ3 (scaling): along which axis (width, depth, or pretrained initialization) does the efficient backbone close the accuracy gap to VGG16-CPG?
+
+CViT-CPG PROJECT: HOW THE CPG METHOD WORKS
+CPG achieves zero forgetting by construction, not by regularization. Every weight has an integer ownership mask: 0 means free, and k means owned by task k and frozen forever. For each new task:
+1. Training and picking: the task trains only free weights, and can reuse older frozen weights read-only through a learned binary "piggymask".
+2. Compacting: the new weights are gradually magnitude-pruned to 60% sparsity; survivors are frozen and pruned weights return to the free pool for future tasks.
+3. Growing: if the free pool runs out, the network gets more capacity.
+Task-specific state (classifier head, BatchNorm parameters and statistics, plus convolution biases and attention-bias tables that Bach added) is stored per task.
+
+CViT-CPG PROJECT: BENCHMARK AND VGG16 REPRODUCTION
+Benchmark: the standard CPG protocol on CIFAR-100. The 100 classes are grouped into their 20 semantic superclasses, giving 20 sequential tasks of 5 classes each, with 2,500 training and 500 test images per task, arriving in a fixed published order. It is the task-incremental setting: the task identity is known at test time, and each task is evaluated with its own head and BatchNorm set.
+Before porting anything, Bach reproduced the official VGG16-CPG reference with the official code, reaching 78.61% average accuracy versus 81.2% in the paper (the gap mainly comes from skipping per-task hyperparameter search). All runs used an identical training recipe so comparisons are fair.
+
+CViT-CPG PROJECT: RQ1 RESULT, EXACT ZERO FORGETTING
+The answer to RQ1 is yes, exactly. Across every model size and every run, frozen-weight drift is bit-exact 0.00e+00 (checksum-verified), backward transfer (BWT) is +0.000%, and old-task logits are reproduced bit for bit.
+Getting there required correctness fixes that Bach found during verification: SqueezeExcite biases and CViT's attention-bias tables were trained by every task but were outside both the ownership masks and the per-task store, which caused a small residual drift (BWT up to 0.13%). Bach moved them into the per-task state store, a few KB per task, after which every instrument measured exactly zero.
+
+CViT-CPG PROJECT: SCALING RESULTS (WIDTH, DEPTH, PRETRAINING)
+Trained from scratch at 32x32 resolution, CViT-CPG plateaued around 70.8% retained accuracy. Making the model wider did not help (widths 1.0 / 1.5 / 2.0 gave 70.76% / 72.27% / 72.02%), so capacity was not the bottleneck. A longer schedule and stronger augmentation both made results worse, showing the plateau is limited by data (2,500 images per task).
+ImageNet-pretrained initialization was the only lever that helped at 32x32 (+1.4 points, 72.17% for CViT-S). Across the pretrained CViT S / M / L / XL family (72.2% / 72.8% / 72.8% / 74.3%), depth beat width, with the efficiency frontier at CViT-S and the accuracy frontier at CViT-XL.
+
+CViT-CPG PROJECT: HEADLINE RESULT, FULL PRETRAINED TRANSFER AT 128PX
+The remaining gap came from incomplete pretrained transfer: the 32x32 build had to discard the checkpoint's stride-16 stem. Bach's fix was to upsample CIFAR images to 128x128 and keep the stock stem, so the entire checkpoint transfers at nearly the same compute.
+- CViT-S@128: 80.07 ± 0.25% (3 seeds), above the VGG16-CPG reproduction (78.61%) at 32x fewer FLOPs (p = 0.010).
+- CViT-XL@128: 82.28 ± 0.31% (3 seeds), above the original paper's 81.2% at 5x fewer FLOPs (p = 0.026).
+Against an ImageNet-pretrained VGG16-CPG fairness control (81.66%, one seed), the +0.62 margin is not significant (p = 0.073), so Bach reports parity, not a win.
+
+CViT-CPG PROJECT: LATENCY AND ENERGY MEASUREMENTS
+Bach measured inference on the RTX 3060 (batch 128) with CUDA-event timing and nvidia-smi power sampling. CViT-S needs 17.4 mJ per image versus 26.0 mJ for VGG16-CPG, about 1.5x less energy, because it draws roughly half the power (83 W vs 161 W).
+Desktop latency, however, favours VGG (0.161 vs 0.211 ms per image) despite VGG's 37.6x more FLOPs, because CascadedViT's many small operations underutilize a large GPU while VGG's dense convolutions saturate it. Bach reported this honestly: the FLOP and energy advantages are real, and the latency advantage is an edge or mobile-device claim, consistent with how the CascadedViT paper positions the architecture.
+
+CViT-CPG PROJECT: MECHANISM LADDER AND CPG VS LORA
+To see how much accuracy comes from the continual-learning mechanism itself, Bach built a "mechanism ladder" on the same frozen CViT-S@128 backbone:
+- Linear probe (per-task head only): 69.51%.
+- Floor-only control (per-task BatchNorm, bias, and attention-bias state, no mask or adapter): 77.97 ± 0.34%.
+- On top of that floor, CPG masks add +2.10 points and per-task LoRA (low-rank adapters, rank 8) adds +4.24.
+Per-task LoRA beat CPG masks at matched storage (82.20% vs 80.07% on S; 84.53% vs 82.28% on XL, the best accuracy in the study). Over a 50-task sequence LoRA rank 2 matched CPG's storage (30.7 MB) with +1.4 points more accuracy, so the expected storage crossover never happened.
+
+CViT-CPG PROJECT: NEGATIVE RESULTS AND THE GROWING FIX
+Bach reported several negative results openly:
+- Naive width growth (CPG's published growing stage) breaks CascadedViT's chunk routing, with old-task logit drift of 0.978. Bach fixed it with unit-granular growth, adding whole attention heads and feed-forward chunks, which kept exact zero forgetting across a growth event at task 11 in all three seeds (71.33 ± 0.50%).
+- Sharing BatchNorm statistics across tasks collapsed new-task learning, showing they are truly task-specific.
+- On the 50-task split, the floor-only control beat CPG masks on both accuracy (95.71% vs 95.44%) and storage (19.2 MB vs 30.8 MB), p = 0.00009.
+- fp16 and 1-bit (BitDelta-style) stores did not change the CPG-vs-LoRA verdict.
+
+CViT-CPG PROJECT: LIMITATIONS AND RESEARCH PRACTICE
+Limitations Bach states in the report: seed coverage is uneven (headline points have 3 seeds, many side studies have 1); the VGG16 references are single runs without error bars; the setting is task-incremental, so class-incremental use would need a task selector; and task order matters, with a measured first-task penalty of 2-9 points. Accuracy-goal compaction recovered +1.07 points (single seed).
+Research practice: Bach wrote a 100 KB technical report with research questions, statistical tests (t-tests and 95% intervals with a 0.6-point resolution floor), threats to validity, and reproduction commands for every experiment, plus LaTeX drafts of an introduction and a related-work section.

@@ -1,0 +1,7 @@
+BLOG POSTS — BACH NGUYEN
+
+BLOG POSTS WRITTEN BY BACH
+Bach has written three blog posts (articles) on the blog section of the portfolio website, bachnguyennn.github.io, about practical machine learning and Bach's modelling philosophy:
+- "When Simple Models Win" (February 2026): baseline-first modelling often beats jumping to complex architectures, because strong baselines reveal whether the signal is present, which features carry the value, and where complexity adds cost without gains.
+- "A Practical Feature Engineering Playbook" (January 2026): before tuning, define the target and leakage boundaries, profile missingness and outliers, encode domain assumptions, and validate features with simple models first.
+- "Lessons From Reproducible ML Pipelines" (March 2026): separate ingestion from feature engineering, features from training, and training from evaluation.

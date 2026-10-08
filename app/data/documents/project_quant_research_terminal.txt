@@ -1,0 +1,39 @@
+QUANT RESEARCH TERMINAL V2 PROJECT (OPTIONS PRICING) — BACH NGUYEN
+
+QUANT RESEARCH TERMINAL PROJECT: OVERVIEW
+Year: 2026. Domain: quantitative finance / options pricing / financial engineering. Tools: Python, NumPy, SciPy, pandas, Numba, JAX, Streamlit, Plotly, FastAPI, Uvicorn, yfinance, Polygon API, Databento, pytest. GitHub: github.com/bachnguyennn/black-scholes-monte-carlo.
+Quant Research Terminal V2 is a research-oriented options analytics platform built around multiple option-pricing models, model calibration, a live valuation scanner, and a controlled backtester. It has a Streamlit web interface with option pricing, valuation scanner, and backtester pages, and a FastAPI backend that exposes the scanner as an API endpoint. Bach designed it to show quantitative reasoning, model comparison, and engineering discipline, not to claim production trading readiness.
+
+QUANT RESEARCH TERMINAL PROJECT: OPTION PRICING MODELS
+The Quant Research Terminal has a multi-model option pricing stack, so results can be compared across models:
+- Black-Scholes: the closed-form analytical benchmark.
+- GBM Monte Carlo (geometric Brownian motion simulation): convergence behaviour and path intuition.
+- Heston: stochastic variance, which produces the volatility skew and smile seen in real markets.
+- Jump Diffusion: discontinuous crash dynamics and heavier tails than the normal distribution.
+- LSV (local-stochastic volatility): a leverage surface intended to improve fit to the observed market implied-volatility surface.
+The project's dependencies include Numba and JAX for fast numerical computing.
+
+QUANT RESEARCH TERMINAL PROJECT: MODEL CALIBRATION
+The calibration layer fits models to live market data. Heston parameters are fitted to the live implied-volatility surface using weighted error minimization, and the LSV calibration constructs a leverage function from the implied-volatility surface.
+Bach presents calibration quality with humility: calibration improves realism but does not eliminate model risk, and LSV support is treated as an advanced research feature rather than a production-grade calibration stack. A calibration regression test on a synthetic Heston surface (where the true parameters are known) checks that the calibration recovers them.
+
+QUANT RESEARCH TERMINAL PROJECT: VALUATION SCANNER
+The transparent valuation scanner looks for options that are mispriced relative to the models. It uses bid/ask crossing logic instead of optimistic midpoint "fantasy fills", so a signal only counts if it survives the actual spread.
+It quarantines bad data before scoring: ghost contracts, invalid quotes, extreme moneyness, very short-dated contracts, and overly wide bid/ask spreads. For every scan it returns diagnostics: how many contracts were filtered and why, signal counts, and the source of each volatility estimate. The scanner is available in the Streamlit app and through the FastAPI endpoint.
+
+QUANT RESEARCH TERMINAL PROJECT: RESEARCH BACKTESTER
+The research backtester is built to avoid look-ahead bias: volatility is estimated only from data available at each point in time. It applies daily delta hedging and transaction-cost assumptions, and reports gross versus net results with cost summaries and sensitivity analysis.
+It is explicit about its main simplification: entries use a Black-Scholes proxy price rather than replaying historical option quotes (NBBO), and the app warns that results are controlled research evidence, not historical fill replay. Bach treats this distinction between model evidence and executable trading evidence as the core of the project's credibility.
+
+QUANT RESEARCH TERMINAL PROJECT: MARKET DATA AND VALIDATION TESTS
+Market data providers are chosen by environment variable (MARKET_DATA_PROVIDER = auto, polygon, or yfinance): Polygon is preferred for spot prices, price history, and expirations when an API key is set, with Yahoo Finance as the fallback for full option chains and the risk-free rate (^IRX).
+Bach wrote a validation test suite covering jump-diffusion martingale behaviour, Heston put-call parity, Heston Fourier pricing versus Monte Carlo consistency, scanner routing and diagnostics, backtester disclosure and hedge-cost behaviour, and calibration regression. The repository also has a mathematical-foundations guide, a project map, and a run guide.
+
+QUANT RESEARCH TERMINAL PROJECT: LIMITATIONS
+Limitations that Bach states openly in the Quant Research Terminal documentation:
+- Historical options NBBO quote data is not replayed in the backtester.
+- The valuation scanner and risk-surface workflows still depend on Yahoo Finance option chains, which can return stale or incomplete quotes.
+- The Polygon integration is intentionally partial, since it runs on a free/basic API key.
+- LSV is an advanced research feature, not a production-grade calibration stack.
+- Calibration improves realism but does not remove model risk.
+Like Bach's other finance projects (the soccer xG betting engine and the Alpaca options agent), it puts honest evidence ahead of flattering backtests.

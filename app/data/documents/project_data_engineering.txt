@@ -1,0 +1,36 @@
+DATA ENGINEERING AND DATA ANALYSIS PROJECTS — BACH NGUYEN
+
+GLOBAL GDP ETL PIPELINE PROJECT (IMF DATA)
+Year: 2024-2025. Domain: data engineering / ETL. Tools: Python, BeautifulSoup, requests, pandas, NumPy, SQLite. GitHub: github.com/bachnguyennn/ETL-Process---IMF-GDP.
+An end-to-end ETL (extract, transform, load) pipeline for international GDP data published by the IMF.
+- Extract: scrapes the "List of countries by GDP (nominal)" table from a web-archived Wikipedia page with requests and BeautifulSoup.
+- Transform: removes stray characters such as commas, converts GDP from millions to billions of USD, and rounds the values.
+- Load: writes a CSV file and a SQLite database (World_Economies.db), then runs SQL queries, such as countries with GDP of at least 100 billion USD.
+- Logging: every stage writes a timestamped log entry.
+
+LARGEST BANKS ETL PIPELINE PROJECT (CURRENCY CONVERSION)
+Year: 2024. Domain: data engineering / ETL. Tools: Python, BeautifulSoup, requests, pandas, NumPy, SQLite. GitHub: github.com/bachnguyennn/Largest-Bank-ETL.
+This ETL pipeline extracts the top 10 largest banks in the world by market capitalization from a web-archived Wikipedia page.
+- Extract: parses the table with BeautifulSoup to get each bank's name and market capitalization in billions of USD.
+- Transform: reads an exchange-rate CSV and adds market capitalization in British pounds (GBP), euros (EUR), and Indian rupees (INR), rounded to two decimals.
+- Load: saves to CSV and to a SQLite database (Banks.db), then runs SQL queries: the full table, the average market capitalization in GBP, and the top 5 bank names.
+- Logging: a timestamped progress log records each ETL stage.
+
+USED CAR PRICES ETL PROJECT (CSV, JSON, AND XML INGESTION)
+Year: 2024. Domain: data engineering / ETL. Tools: Python, pandas, xml.etree (ElementTree), glob. GitHub: github.com/bachnguyennn/Simple-Etl-Process.
+This ETL process ingests used-car price data from several file formats at once, a common real-world data-integration problem.
+- Extract: separate extractor functions read CSV files, line-delimited JSON files, and XML files (parsed with ElementTree); glob finds every source file and all records are combined into one pandas DataFrame with a consistent schema (car_model, year_of_manufacture, price).
+- Transform: rounds prices to two decimal places.
+- Load: writes the result to a CSV file.
+- Logging: each phase's start and end is timestamped in a log file for traceability.
+
+ONTARIO INFRASTRUCTURE ANALYSIS PROJECT: OVERVIEW AND METHODS
+Year: 2024. Domain: data analysis / geospatial analysis / public data. Role: Analyst. Tools: Python, pandas, NumPy, Matplotlib, Seaborn, Folium, OpenStreetMap Nominatim geocoding API, Jupyter. GitHub: github.com/bachnguyennn/Ontario-Infrastructure-Analysis.
+An exploratory analysis of public infrastructure projects in Ontario, Canada that are in planning or under construction, using the "Ontario Builds: Communities" dataset from Ontario Open Data. Bach kept projects with a target completion date after December 2024, cleaned and standardized 19 columns of government data, and filled missing region names and coordinates by geocoding postal codes through the OpenStreetMap Nominatim API.
+
+ONTARIO INFRASTRUCTURE ANALYSIS PROJECT: ANALYSIS AND FINDINGS
+The Ontario infrastructure analysis covered three questions, with interactive Folium maps and charts:
+- Regional distribution: which regions have the most projects, and how many are in planning vs under construction.
+- Funding sources: which levels of government (municipal, provincial, federal, other) fund each project, and whether funding correlates with project status.
+- Completion timelines: cumulative projects by target completion quarter.
+Findings: the Central and Northern regions have the most projects; Central leads in projects under construction, while the Northeast and Northwest are mostly still in planning. Funding is spread fairly evenly across regions, with no significant correlation between funding source and project status. Most projects are expected to finish by 2028.

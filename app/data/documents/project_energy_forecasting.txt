@@ -1,0 +1,22 @@
+ELECTRICITY LOAD FORECASTING PROJECT — BACH NGUYEN
+
+ELECTRICITY LOAD FORECASTING PROJECT: OVERVIEW AND QUESTION
+Year: 2025. Domain: time-series machine learning / energy demand forecasting. Tools: XGBoost, PyTorch (LSTM), PyTorch Forecasting (Temporal Fusion Transformer), Prophet, SHAP, pandas. GitHub: github.com/bachnguyennn/Energy-Demand-Prediction.
+Electricity cannot be stored cheaply, so grid operators must predict demand before it happens; a forecast that is off by a few percent means wasted generation or a shortfall. Bach asked: how accurately can hourly electricity demand be forecast, and which modelling approach actually wins, a classic statistical model, gradient boosting, or deep learning? Rather than assume deep learning is best, Bach put four very different models on the same footing.
+
+ELECTRICITY LOAD FORECASTING PROJECT: PJM DATA AND FEATURE ENGINEERING
+Data: the PJM hourly energy consumption dataset. Exploratory analysis showed strong daily and weekly seasonality (demand follows the working day and dips on weekends) and that demand is intensely auto-regressive: autocorrelation at a 1-hour lag is enormous, with clear echoes at 24 hours and 168 hours (one day and one week).
+That insight drove the feature engineering: lag features at 1h, 24h, and 168h; rolling statistics; cyclical sine/cosine time encodings for hour, day, and month; and holiday flags to catch irregular dips in demand.
+
+ELECTRICITY LOAD FORECASTING PROJECT: WALK-FORWARD VALIDATION AND MODELS
+Validation: a random train/test split leaks the future into the past in time series, so Bach used 3-fold walk-forward validation: train on the past, test on the next 30 days, then roll forward. This mirrors how a forecast is used in production.
+The four-model bake-off, chosen so Bach could reason about why one wins:
+- Prophet: statistical baseline (trend plus seasonality curve-fitting).
+- XGBoost: gradient-boosted trees on the engineered lag features.
+- LSTM: a recurrent neural network that learns temporal dependencies.
+- Temporal Fusion Transformer (TFT): a modern multi-horizon deep learning model.
+
+ELECTRICITY LOAD FORECASTING PROJECT: RESULTS AND TAKEAWAYS
+Results (mean absolute error in megawatts / MAPE): XGBoost 125.09 MW / 0.81% (best); LSTM 170.69 MW / 1.11%; Temporal Fusion Transformer 896.78 MW / 5.53%; Prophet 1,396.96 MW / 9.00%.
+XGBoost wins because the lag_1h feature directly captures the auto-regressive structure. Prophet gets the daily and weekly shape but misses sharp hourly turns, and the TFT underfit on a deliberately short training budget. SHAP confirmed that short-term lag features dominate.
+Takeaway: boosted trees on well-engineered lag features beat fancier deep models here, and the EDA explained why before training. Next step: add weather data, the obvious missing driver of demand.

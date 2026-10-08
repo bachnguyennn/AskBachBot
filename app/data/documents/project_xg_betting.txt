@@ -1,0 +1,25 @@
+SOCCER xG VALUE-BETTING ENGINE PROJECT — BACH NGUYEN
+
+SOCCER xG BETTING PROJECT: OVERVIEW AND QUESTION
+Year: 2025. Domain: quantitative / sports analytics. Role: Researcher and Builder. Tools: XGBoost, scikit-learn, SciPy, StatsBombPy, SHAP, Optuna, pytest (37 tests). GitHub: github.com/bachnguyennn/Expected-Goal-Prediction.
+Question: can a model Bach builds actually beat the betting market, or does it only look like it can? Anyone can print a profit on the sample they trained on. The real test is the closing line, the final odds just before kickoff after sharp money has moved them. Bach backtested against Pinnacle's closing odds, the sharpest price in the market, and committed to reporting the honest result even if the answer was "no".
+
+SOCCER xG BETTING PROJECT: DATA AND CALIBRATION
+Data: StatsBomb open data for the shot model (every shot, with its location and a freeze-frame of defender positions), and football-data.co.uk results and closing odds for 760 La Liga matches across 2017-2019.
+Shot quality is heavily skewed toward near-zero chances, with a long thin tail of real opportunities, so a model that predicts "low chance" for everything looks accurate but is useless. That made calibration, not raw accuracy, the goal: a predicted 0.15 must actually mean the shot scores 15% of the time, or every downstream bet is built on sand. Bach also checked that shot quality (xG) explains match outcomes far better than shot counts, validating the xG premise.
+
+SOCCER xG BETTING PROJECT: SYSTEM DESIGN (xG, DIXON-COLES, KELLY)
+Bach built the betting engine in five layers:
+1. Expected-goals (xG) model: XGBoost on shot geometry and freeze-frame defensive context, with Platt calibration (Brier 0.085 vs StatsBomb's own xG at 0.079, which uses proprietary tracking data).
+2. Pre-match forecaster: a Dixon-Coles model of team attack and defence strength and home advantage, re-fit every matchday on prior games only (no look-ahead).
+3. Match simulator: the full joint distribution of scorelines.
+4. Betting layer: expected value plus fractional Kelly staking.
+5. Walk-forward backtest against the closing line.
+
+SOCCER xG BETTING PROJECT: BACKTEST RESULTS AND BOOTSTRAP SIGNIFICANCE
+The xG model is well calibrated, tracking the StatsBomb benchmark closely. In the walk-forward backtest, the goals model placed 1,379 bets with a +5.7% level-stakes yield, and the xG-proxy model placed 1,636 bets with +3.0%.
+A 10,000-sample bootstrap gave 95% confidence intervals of [-3.2%, +15.0%] (p = 0.11) and [-4.4%, +10.5%] (p = 0.22). Both cross zero, so the apparent profit is statistically indistinguishable from luck. The model's match forecasts were also slightly worse than the market's (Brier 0.605 vs 0.584), and quarter-Kelly bankroll curves showed large swings.
+
+SOCCER xG BETTING PROJECT: TAKEAWAYS
+Conclusion: no demonstrable edge against the closing line, and that is the correct answer. An efficient betting market should be hard to beat, and proving that rigorously, with a closing-line benchmark, walk-forward validation, and bootstrap significance testing, is a far more valuable demonstration than a cherry-picked profit curve.
+What Bach learned: in any predictive-finance problem the headline is not the point estimate but whether you can tell signal from variance. Calibration, significance testing, and benchmarking against the market are the whole job. The same mindset carries into Bach's later quant projects, the Quant Research Terminal and the Alpaca options agent.

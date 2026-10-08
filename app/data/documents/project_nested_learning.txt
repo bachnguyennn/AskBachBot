@@ -1,0 +1,25 @@
+NESTED LEARNING (HOPE) ARCHITECTURE PROJECTS — BACH NGUYEN
+
+NESTED LEARNING PROJECT: OVERVIEW
+Years: 2025-2026. Domain: ML systems research / continual learning / language models. Role: Researcher and Builder. Tools: PyTorch, continual learning, state-space models, fast weights, uv, Hydra. GitHub: github.com/bachnguyennn/nested_learning.
+Nested Learning is a research project based on Google's Nested Learning paper and its HOPE architecture, which treats a model as nested optimization problems updating at different speeds. Bach built a mechanism-level reproduction of HOPE: HOPE blocks, the Continuum Memory System (CMS), and Self-Modifying Titans (a neural long-term memory that updates itself at test time), aiming for the quality bar of lucidrains' open-source Titans reference. It is one of Bach's featured portfolio projects.
+
+NESTED LEARNING PROJECT: DUAL-STREAM ARCHITECTURE AND RESULTS
+Beyond reproducing the paper, Bach designed a dual-stream continual-learning architecture that combines fast-weight token updates with an O(1) (constant-size) memory vault, so the model can keep absorbing new information without its memory cost growing with sequence length.
+Bach ran empirical ablation studies on the WikiText-103 language-modelling benchmark, and the memory vault improved perplexity by 2.1 points in the ablations. Other ablation knobs in the codebase include surprise gating of inner updates (only updating memory when the teach signal is large), Muon vs AdamW optimizers, and which memory levels (Titans or fast CMS) receive test-time updates.
+
+NESTED LEARNING PROJECT: ENGINEERING AND REPRODUCIBILITY
+The repository is built like a research library rather than a notebook. It ships an "nl" command-line tool (doctor, smoke, audit, and train commands) with Hydra config overrides, a uv-managed Python 3.12 environment pinned to PyTorch 2.9, and support for CPU, CUDA, Apple Silicon (MPS) for small runs, and multi-GPU training with torchrun / DDP.
+Bach wrote unit tests for tensor-level invariants (the teach signal, CMS chunking, and causality), fidelity checks that audit configs against the paper, and pinned a SHA-256 hash of the paper text so the reproduction is tied to an exact source. Bach is explicit that it targets mechanism-level fidelity, not full paper-scale results.
+
+NESTED LEARNING PROJECT: DATA PIPELINE AND EVALUATION
+The Nested Learning data pipeline trains a 32,000-token SentencePiece unigram tokenizer on a RefinedWeb-based corpus mixture, then filters and shards the corpus with logged statistics, with a quick sample pipeline for a first run and a full pipeline that scales ingestion through environment variables.
+Evaluation tooling includes zero-shot benchmark scripts (for example PIQA), PG-19 long-context perplexity evaluation, and memorization experiments that control which memory paths receive test-time updates. A "first 30 minutes" path runs data preparation, a smoke training run, and a mechanism audit on a CPU, so anyone can verify the pipeline end to end without a GPU.
+
+NESTED LEARNING VISION PROJECT: 3-TIER VISION MODEL
+Year: 2026. GitHub: github.com/bachnguyennn/nested_learning_vision. Bach adapted Nested Learning to computer vision: a vision-transformer-style image classifier with a Slow / Mid / Fast hierarchy of HOPE blocks. The Fast tier updates every step (textures and edges), the Mid tier every 16 steps (object parts and spatial relations), and the Slow tier every 256 steps (global scene and categorical priors), with learning rates of lr, 0.5x lr, and 0.1x lr. Elastic Weight Consolidation (EWC) on the Slow tier protects its stable global priors against catastrophic forgetting.
+It trains on CIFAR-100 and includes a catastrophic-forgetting benchmark (Split CIFAR-10 and CIFAR-10 to SVHN, 4 ablations) plus smoke and unit tests.
+
+NESTED LEARNING VISION PROJECT: 100% M3 OPTIMIZER DESIGN
+The whole Nested Learning Vision model is trained only with the M3 optimizer, with no AdamW and no SGD. M3 uses Newton-Schulz gradient orthogonalization with two momentum buffers (a fast one orthogonalized every step and a slow one accumulated over chunks) plus an RMSprop-style second moment.
+Newton-Schulz orthogonalization needs matrix-shaped parameters, so Bach made every parameter M3-compatible: all layers use bias=False, there are zero 1D parameters, LayerNorm is replaced with a parameterless RMSNorm, and the usual ViT CLS token is replaced by a position slot whose content comes from the DeltaNode memory read. A tiered optimizer manager runs separate M3 instances for the Slow, Mid, and Fast tiers.
