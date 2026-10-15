@@ -1,0 +1,34 @@
+MARKETGUARD REAL-TIME CRYPTO MARKET SURVEILLANCE PROJECT — BACH NGUYEN
+
+MARKETGUARD PROJECT: OVERVIEW
+Year: 2026 (October). Domain: data engineering / streaming pipelines / market surveillance and anomaly detection. Tools: Python, Apache Kafka, Apache Spark (PySpark Structured Streaming), Delta Lake, Parquet, pandas, PyArrow, Streamlit, Coinbase WebSocket API, Azure Blob Storage, Azure Container Apps, Azure Container Registry, Docker, GitHub Actions, pytest. GitHub: github.com/bachnguyennn/Market-Guard. Live demo: market-guard-coinbase.streamlit.app.
+MarketGuard is an end-to-end streaming data pipeline that collects live Coinbase trades for BTC-USD and ETH-USD, processes them through a medallion architecture (Bronze, Silver, Gold) with Kafka, Spark, and Delta Lake, and flags statistically unusual price and volume behaviour on a public Streamlit dashboard.
+
+MARKETGUARD PROJECT: ARCHITECTURE (BRONZE, SILVER, GOLD)
+- Bronze (ingestion): an async Python collector subscribes to the Coinbase WebSocket "matches" channel, buffers trades into batches of 100 or every 5 seconds, writes them as JSONL, and uploads them to an immutable Azure Blob Storage Bronze archive with retries and recovery of pending batches. The collector runs in Docker on Azure Container Apps, deployed by a GitHub Actions workflow with OIDC login.
+- Silver (clean trades): Spark Structured Streaming reads trades from a two-partition Kafka topic, validates them against an explicit schema, deduplicates them, and writes them to a Delta Lake table with an insert-only MERGE on (product_id, trade_id).
+- Gold (analytics): one-minute aggregates per product, including trade count, base volume, notional volume, and VWAP, computed with exact Decimal values in UTC.
+- Anomalies and dashboard: Gold and anomaly outputs are exported as Parquet and shown on a Streamlit dashboard with Market Overview and Anomaly Alerts tabs.
+
+MARKETGUARD PROJECT: ANOMALY DETECTION
+MarketGuard runs gap-aware statistical detectors on the one-minute Gold data, written as Spark window functions:
+- Volume spikes: a rolling z-score of notional volume against the previous 5 minutes, flagged when the z-score exceeds 3.
+- Statistical price jumps: one-minute VWAP returns compared with rolling volatility from the previous 5 returns, flagged when the absolute return z-score exceeds 3. A simple fixed-threshold price-jump rule (2% move) also exists.
+- Gap awareness: a data-quality step splits each product's history into continuous segments, so rolling windows never compare across missing minutes, and returns are only computed between exactly consecutive minutes.
+Alerts are framed honestly as statistical indicators for investigation, not findings of fraud or market manipulation.
+
+MARKETGUARD PROJECT: RELIABILITY AND EXACTLY-ONCE THINKING
+A main focus of MarketGuard is replay safety and verifiable correctness:
+- Replaying the same trades through Kafka, and restarting Spark with the same checkpoint, never creates duplicates. The verified local demo publishes 100 trades, replays all 100, then restarts and replays them again, and Silver stays at 100 -> 100 -> 100 rows.
+- Tests cover the failure window where Delta has committed but Spark has not finished its checkpoint, proving the retried batch adds no extra trades.
+- A verifier checks every trade and every Gold bucket's count, volume, and VWAP against an independent Decimal reference.
+- The local acceptance run produced 30 Gold buckets with 100 trades and the two expected alerts (a BTC volume spike and an ETH price jump). Validation included 40 focused tests, five worker and recovery tests, and one real Kafka-to-dashboard end-to-end test.
+
+MARKETGUARD PROJECT: CLOUD DEPLOYMENT AND PUBLIC DASHBOARD
+- Live collector: Docker image built and pushed to Azure Container Registry and deployed to Azure Container Apps by GitHub Actions, with the deployed revision and image verified after each deploy.
+- Analytics refresh: a manual GitHub Actions workflow downloads recent Bronze data from Azure, rebuilds Silver, Gold, and anomalies with Spark, and publishes Parquet snapshots to a private Azure Blob container. Uploads are verified byte-for-byte and a SHA-256 hash manifest is written last, so the dashboard never mixes two different snapshots.
+- Public dashboard: hosted on Streamlit Community Cloud and reading Azure snapshots through a short-lived read-only SAS token. Without Azure secrets it shows a clearly labelled synthetic demo instead of silently faking live data, and it reports the latest market minute and data age rather than claiming a continuous live feed.
+- Security: passwordless DefaultAzureCredential and GitHub OIDC, no account keys or SAS tokens in source control.
+
+MARKETGUARD PROJECT: TRADE-OFFS AND LIMITATIONS
+Bach documents the limits openly: a single local Kafka broker and one writer per Delta table (not a high-availability deployment), Gold and anomaly outputs refreshed as batch snapshots rather than continuously, a six-hour rolling refresh window rather than full incremental rebuilds, manual SAS rotation, and no scheduled refresh yet. Late-event correction and incremental Gold updates are future work.

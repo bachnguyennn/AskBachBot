@@ -2,7 +2,7 @@ PROJECTS OVERVIEW — BACH NGUYEN
 
 OVERVIEW OF BACH'S PROJECTS
 This document is the index of Bach Nguyen's personal, academic, and research projects in machine learning, deep learning, LLM applications, quantitative finance, data science, and data engineering. All code is on GitHub at github.com/bachnguyennn, and longer write-ups are on the portfolio at bachnguyennn.github.io/projects. Each project has its own detailed document.
-Bach has built 17+ projects since 2024, ranging from ETL pipelines and data analysis, through clinical and medical machine learning, time-series forecasting, and NLP, to continual-learning research on vision transformers, a deployed RAG chatbot, and an autonomous options-trading agent.
+Bach has built 18+ projects since 2024, ranging from ETL pipelines, streaming data pipelines, and data analysis, through clinical and medical machine learning, time-series forecasting, and NLP, to continual-learning research on vision transformers, a deployed RAG chatbot, and an autonomous options-trading agent.
 
 BACH'S APPROACH: HONEST METHODOLOGY OVER FLATTERING NUMBERS
 A theme across Bach's projects is honest methodology over flattering numbers. Bach:
@@ -29,17 +29,18 @@ Quantitative finance projects:
 - Benford's Law Fraud Detection (2026): fraud screening from SEC 10-K filings.
 - Soccer xG Value-Betting Engine (2025): xG and Dixon-Coles models backtested against closing odds.
 Data engineering and data analysis projects:
+- MarketGuard (2026): real-time crypto market surveillance pipeline, Coinbase WebSocket -> Kafka -> Spark -> Delta Lake medallion architecture with statistical anomaly alerts on a Streamlit dashboard, deployed on Azure.
 - Global GDP ETL, Largest Banks ETL, and Used Car Prices ETL (2024-2025): Python ETL pipelines into CSV and SQLite.
 - Ontario Infrastructure Analysis (2024): geospatial analysis of Ontario Open Data.
 - Azure data pipelines for Statistics Without Borders (2024), described in azure.txt.
 
 BACH'S PROJECTS GROUPED BY TOPIC
-- Featured: Nested Learning, Soccer xG Betting Engine, Chest X-Ray, Electricity Forecasting, Ask Bach.
+- Selected projects on the portfolio home page: Ask Bach, Hospital Readmission Risk Model, Chest X-Ray Pneumonia Detection, Electricity Load Forecasting.
 - LLM, RAG, and AI agents: Ask Bach, Alpaca Options Agent (Claude and MCP).
 - Healthcare and medical ML: Hospital Readmission, Chest X-Ray Pneumonia Detection.
 - Computer vision and deep learning: Chest X-Ray (ResNet50), AstroLoc-ML (EfficientNet), CViT-CPG, Nested Learning Vision.
 - Continual learning: CViT-CPG, Nested Learning, Nested Learning Vision, thesis research.
 - NLP: FastText embeddings, Nested Learning language models, Ask Bach.
 - Finance and quant: Alpaca agent, Quant Research Terminal, Benford fraud, xG betting.
-- Cloud and deployment: Ask Bach (Docker, Azure Container Apps, Cosmos DB).
-- Data engineering: GDP, Banks, and Used Car ETL pipelines, Ontario analysis.
+- Cloud and deployment: Ask Bach (Docker, Azure Container Apps, Cosmos DB), MarketGuard (Azure Container Apps, Blob Storage, GitHub Actions).
+- Data engineering: MarketGuard streaming pipeline (Kafka, Spark, Delta Lake), GDP, Banks, and Used Car ETL pipelines, Ontario analysis.
