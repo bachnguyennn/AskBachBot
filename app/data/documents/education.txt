@@ -52,7 +52,7 @@ CERTIFICATIONS
 
 UNDERGRADUATE THESIS
 
-Bach is doing an undergraduate thesis in the Visual Computing Lab, supervised by Dr. Faisal Qureshi, on continual learning for vision transformers. See research.txt for details.
+Bach is doing an undergraduate thesis in the Visual Computing Lab, supervised by Dr. Faisal Qureshi, on continual learning for CascadedViT, the lab's lightweight vision transformer, to reduce catastrophic forgetting while keeping the model efficient. The work is ongoing. See research.txt for details.
 
 
 TEACHING ASSISTANT — PREPARATORY MATHEMATICS FOR ENGINEERS (MATH-0900U)

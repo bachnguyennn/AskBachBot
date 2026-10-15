@@ -1,66 +1,45 @@
-UNDERGRADUATE THESIS RESEARCH — CONTINUAL LEARNING FOR VISION TRANSFORMERS
+UNDERGRADUATE THESIS RESEARCH — CONTINUAL LEARNING FOR CASCADEDVIT
 
 Role: Undergraduate Thesis Researcher
 Lab: Visual Computing Lab, Ontario Tech University (Oshawa, Ontario)
 Supervisor: Dr. Faisal Qureshi
 Dates: September 2026 to present
-Tools used: Python, PyTorch, timm, NumPy, CUDA (NVIDIA RTX 3060), Git
-Research area: continual learning, parameter-efficient vision transformers, computer vision
+Research area: continual learning, efficient vision transformers, computer vision
+Research page: bachnguyennn.github.io/research
 
 
 OVERVIEW
 
-Bach Nguyen is doing undergraduate thesis research on continual learning in the Visual Computing Lab at Ontario Tech University, supervised by Dr. Faisal Qureshi. The work builds on the lab's CascadedViT architecture, a parameter-efficient vision transformer.
+Bach Nguyen is doing undergraduate thesis research on continual learning in the Visual Computing Lab at Ontario Tech University, supervised by Dr. Faisal Qureshi. Bach is studying how CascadedViT, a lightweight vision transformer from the lab, can keep learning new tasks without catastrophically forgetting the old ones, while keeping the model efficient.
 
-Continual learning (CL) is the problem of teaching a neural network a sequence of tasks one after another without "catastrophic forgetting", meaning the model should keep performing well on old tasks while learning new ones. This is often called the stability-plasticity dilemma.
-
-Main contributions so far:
-- Implemented a 10M-parameter CascadedViT variant under CPG (Compacting, Picking, and Growing), a continual-learning method, working inside an existing research codebase without disrupting surrounding components.
-- Collaborating with a co-author of the CascadedViT paper on the expert-routing mechanism in SEMA (a continual-learning method that grows modules and routes inputs to them).
-- Added prototype-guided routing (PRAS) to the lab's CViT-CL continual-learning pipeline, giving a reliable improvement of about 3 accuracy points.
+This work is ongoing. Bach has not made the methods or results public yet and will share more on the research page once they are ready to be made public.
 
 
-KEY CONCEPTS (PLAIN LANGUAGE)
+THE PROBLEM: CATASTROPHIC FORGETTING
 
-- CascadedViT (CViT): a vision transformer whose feed-forward layers are split into "chunks" that run as a cascade, where each chunk's input is the previous chunk's output. The XL variant used has about 10.5 million parameters.
-- CViT-CL pipeline: the lab's continual-learning setup. The pretrained backbone is frozen. When a new task shifts the data distribution, the model grows new "expansion chunks" inside its feed-forward layers (native architectural growth), trains them on the new task, then freezes them.
-- Routing: at test time the model doesn't know which task an image came from, so a router decides how much weight each grown chunk gets for each image.
-- CPG (Compacting, Picking, and Growing; Hung et al., NeurIPS 2019): a continual-learning method that prunes each task's weights to free up capacity for later tasks, reuses ("picks") earlier weights, and grows capacity when needed.
-- PRAS (Prototype-Guided Routing Auto-Selection; Pan et al., Neurocomputing 2026): a routing method that compares an image's features to per-task "prototypes" (cluster centres from k-means) in a frozen feature space and routes the image to the most similar task.
+Train a neural network on one task, then fine-tune it on a second, and its accuracy on the first task usually collapses. The gradients for the new task overwrite the weights that encoded the old one. This is called catastrophic forgetting.
+
+The simple fix is to retrain on all the data every time something new arrives. That means storing every past example and paying for a full training run on each update, which doesn't work when data arrives over time, can't be kept, or the model lives on a small device. Continual learning looks for ways to learn a sequence of tasks while keeping what the model already knows. The core tension is stability (don't forget) against plasticity (still learn new things), often called the stability-plasticity dilemma.
 
 
-WHAT BACH DID (SEPTEMBER 2026)
+WHY CASCADEDVIT
 
-1. Oracle routing diagnostic
-Bach built a diagnostic mode ("oracle routing") that routes each test image to its true task's chunks. This measures the upper bound any router could reach. Result: oracle routing scored 86.5% average accuracy, far above every real router, showing that task identification is the main bottleneck in the pipeline.
+CascadedViT (CViT), by Srivathsan Sivakumar and Faisal Qureshi (paper on arXiv: arxiv.org/abs/2511.14111), is a vision transformer built for compute- and battery-constrained hardware. Its Cascaded-Chunk Feed-Forward Network (CCFFN) splits features into chunks to cut parameters and FLOPs. In the paper, CViT-XL reaches 75.5% top-1 accuracy on ImageNet-1K with 15% fewer FLOPs and 3.3% less energy than EfficientViT-M5.
 
-2. CPG over expansion chunks
-Bach integrated CPG into the pipeline so grown chunks could reuse freed capacity instead of always growing new chunks. While testing, Bach found and fixed three bugs in the integration:
-  - reused chunks were never actually trained (0 of 42 managed weights reached the optimizer),
-  - AdamW weight decay was slowly eroding weights that were supposed to be frozen,
-  - shared BatchNorm statistics drifted across tasks.
-Even after the fixes, CPG as integrated hurt accuracy (about 53-54% average vs about 67% without it). Bach reported this honestly as a negative result and recommended not using CPG in this pipeline.
-
-3. PRAS prototype-guided routing
-Before this work, every router in the pipeline was "task-blind": test images put only about 7-11% of their routing weight on their own task's chunks. Bach adapted PRAS as the router for grown chunks.
-  - Results on CIFAR-100 (10 tasks of 10 classes, 3 random seeds): PRAS reached 70.31 ± 0.79 average accuracy and 60.54 ± 0.63 final accuracy, versus 67.37 / 57.37 for the previous autoencoder-based routing. That is a gain of about +2.9 average and +3.2 final accuracy points, consistent across all seeds.
-  - PRAS made routing task-selective: 46-50% of routing weight went to the correct task's chunks, versus about 11% before.
-  - Bach also found that each point of task-identification accuracy is worth about 0.8 points of final accuracy, and that routing based on the classifier head's posterior does not work.
-
-Recommendation from the work: use PRAS routing with the pooled shift detector, without CPG. The most valuable next step is better task identification.
-
-Bach documented all of this in a detailed technical report (experiments, analyses, reproduction commands, limitations) and a shared experiment log and changelog for the lab.
+The phones and drones CViT is designed for are also where continual learning matters most. A deployed model should pick up new classes on the device, where retraining from scratch or storing all past data isn't realistic. But most continual learning work has been done on larger backbones, and a compact model has less spare capacity to share between tasks.
 
 
-THESIS PROPOSAL: NATIVE ARCHITECTURAL GROWTH
+WHAT BACH IS WORKING ON
 
-The broader thesis direction is "CascadedViT for Continual Learning: A Native Architectural Growth Approach". The idea is to use CascadedViT's cascaded chunk structure for continual learning: when a new task arrives, the model grows new chunks that continue the existing cascade (rather than adding external adapters or parallel networks), with gating to turn chunks on or off. This sits in the architecture-based family of continual-learning methods, alongside DEN, DER, Progressive Networks, and PackNet. Experiments use CIFAR-100 split into 10 tasks, with ImageNet-100 planned.
+Bach's thesis asks: how can a compact, efficient vision transformer like CViT learn continually without forgetting, while staying small and cheap to run?
+
+Keeping old knowledge usually costs something, whether that's extra parameters, extra compute, or stored data. For a model whose whole point is efficiency, those costs matter as much as accuracy. Bach is looking for approaches that reduce forgetting in CViT without giving up what makes it efficient.
 
 
 QUICK FACTS (FOR COMMON QUESTIONS)
 
-- What is Bach's research about? Continual learning for parameter-efficient vision transformers (CascadedViT), so models can learn new tasks without forgetting old ones.
+- What is Bach's research about? Continual learning for CascadedViT, the lab's lightweight vision transformer, so it can learn new tasks without forgetting old ones while staying efficient.
 - Who supervises Bach? Dr. Faisal Qureshi, Visual Computing Lab, Ontario Tech University.
-- What is Bach's best result? PRAS prototype-guided routing, about +3 accuracy points over the previous router on CIFAR-100, consistent across 3 seeds.
-- Does Bach have deep learning experience? Yes: PyTorch research code, vision transformers, GPU experiments, and debugging training pipelines in an existing research codebase.
+- When did the thesis start? September 2026; it is ongoing.
+- Are there results yet? The work is ongoing and results are not public yet; Bach will share more on the research page when it is ready.
 - Related personal research project: "Nested Learning Architecture" (see projects.txt).

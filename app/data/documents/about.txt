@@ -17,7 +17,7 @@ Outside of school and work, Bach loves reading books and watching football (socc
 
 EXPERIENCE SUMMARY (MOST RECENT FIRST)
 
-- Undergraduate Thesis Researcher, Visual Computing Lab, Ontario Tech University (Sep 2026 – present): continual learning for vision transformers (CascadedViT, CPG, SEMA, PRAS routing). See research.txt.
+- Undergraduate Thesis Researcher, Visual Computing Lab, Ontario Tech University (Sep 2026 – present): researching continual learning for CascadedViT, the lab's lightweight vision transformer, to reduce catastrophic forgetting while keeping the model efficient (ongoing, results not yet public). See research.txt.
 - Teaching Assistant, MATH-0900U Preparatory Mathematics for Engineers, Ontario Tech University (Sep 2026 – present). See education.txt.
 - Events Coordinator, Ontario Tech Computer Science Club (Sep 2025 – present): co-organizes an annual hackathon with 250+ participants. See education.txt.
 - IT Intern, Canadian Mental Health Association, Oshawa (May – Aug 2025): Power Apps / Power Automate booking automation that saved 5+ staff hours per week; IT support for 100+ staff. See cmha.txt.
