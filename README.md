@@ -59,7 +59,7 @@ When the knowledge base does not contain the answer, it declines instead of gues
 .
 ├── app/                         # Python project root (run commands from here)
 │   ├── data/
-│   │   └── documents/           # Knowledge base source: 6 plain-text documents (uploaded to Cosmos DB)
+│   │   └── documents/           # Knowledge base source: 21 plain-text documents (uploaded to Cosmos DB)
 │   ├── scripts/                 # Offline Cosmos DB jobs (run as python -m scripts.<name>)
 │   │   ├── migrate_documents.py # Upsert .txt files → `content` container
 │   │   ├── index_chunks.py      # Chunk + embed → `chunks` container (vector-indexed)
@@ -410,12 +410,15 @@ ANSWER_SCHEMA = {
 | File | Covers | Chunks |
 |---|---|---|
 | `about.txt` | Profile, short bio, experience summary, technical skills, working style, what Bach is looking for, contact links | 5 |
+| `ask_bach.txt` | This chatbot: architecture, pipeline, hybrid retrieval, citations, evaluation, deployment, security, content API, lessons | 12 |
 | `azure.txt` | Statistics Without Borders Azure pipeline work, Hack Hive Azure challenge, cloud and data-engineering skills | 3 |
+| `blog.txt` | Blog posts | 1 |
 | `cmha.txt` | IT internship at CMHA Durham: overview, data management and reporting, IT support, lessons learned | 4 |
 | `education.txt` | Degree, coursework, certifications, thesis summary, TA role, campus leadership | 4 |
-| `projects.txt` | Personal and academic ML, data and software projects | 10 |
-| `research.txt` | Undergraduate thesis on continual learning for vision transformers, explained in plain language | 7 |
-| **Total** | **≈ 32.5 KB of text** | **33** |
+| `projects.txt` | Index of all projects, Bach's methodology, projects grouped by topic | 5 |
+| `project_*.txt` (13 files) | One detailed document per project: Alpaca options agent, AstroLoc-ML, Benford fraud detection, chest X-ray, CViT-CPG, data engineering ETLs, energy forecasting, FastText, hospital readmission, MarketGuard, Nested Learning, Quant Research Terminal, xG betting | 77 |
+| `research.txt` | Undergraduate thesis on continual learning for CascadedViT: the problem, why CViT, the research question (ongoing, results not yet public) | 4 |
+| **Total** | **≈ 90.7 KB of text, 21 documents** | **115** |
 
 ### Authoring conventions
 
@@ -430,13 +433,21 @@ The chunker depends on these rules:
 
 ### Adding or updating a document
 
+```mermaid
+flowchart LR
+    A["1. Edit the .txt file<br/>e.g. data/documents/ask_bach.txt"] --> B["2. Migrate documents<br/>scripts.migrate_documents<br/>updates raw text in Cosmos DB"]
+    B --> C["3. Index chunks<br/>scripts.index_chunks<br/>re-embeds and updates vector storage"]
+    C --> D["4. Refresh BM25<br/>restart the app so it reloads<br/>the in-memory lexical index"]
+    D --> E["5. Test the chatbot<br/>check its answers and<br/>cited sources"]
+```
+
 1. Edit or add a `.txt` file in `app/data/documents/`.
 2. From `app/` (signed in with `az login`), upload it with `python -m scripts.migrate_documents`, then re-embed with `python -m scripts.index_chunks`. Order matters: `index_chunks` reads documents from Cosmos DB, not from disk.
 3. Check chunking with `python -m src.load_documents` and spot-check retrieval with `python -m src.hybrid_retriever`.
 4. If chunk IDs moved, update the labels in `src/eval_retrieval.py`, re-run `python -m src.eval_retrieval`, and compare against the [published results](#retrieval-evaluation).
 5. Restart the app (a new revision, or `az containerapp revision restart`) so it rebuilds its in-memory indexes. You don't need to rebuild the image just for a content change.
 
-> ⚠️ Both upload scripts only **upsert**. If you delete or rename a `.txt` file, also delete its items from the `content` and `chunks` containers, or the old document will keep being served. See [ADR 0001 → Updating content](docs/adr/0001-move-knowledge-base-to-cosmos-db.md#updating-content).
+> ⚠️ `migrate_documents` only **upserts**. If you delete or rename a `.txt` file, also delete its item from the `content` container, or the old document will keep being served. `index_chunks` then removes any chunk in `chunks` that no longer matches a current document chunk (stale chunks from shrunk, renamed or deleted documents). See [ADR 0001 → Updating content](docs/adr/0001-move-knowledge-base-to-cosmos-db.md#updating-content).
 
 ---
 
@@ -482,7 +493,7 @@ cd app
 uvicorn src.api:app --reload --port 8000
 ```
 
-Startup takes a few seconds while the indexes are built; `Loaded 6 documents from Cosmos DB` prints twice, once per index. Then:
+Startup takes a few seconds while the indexes are built; `Loaded 21 documents from Cosmos DB` prints twice, once per index. Then:
 
 ```bash
 curl -s http://localhost:8000/
@@ -508,7 +519,7 @@ Every module with a `__main__` block doubles as a runnable demo. Run them from `
 | `python -m src.rag` | `resolve_sources` self-checks, then two verbose end-to-end answers | Yes (2 calls) |
 | `python -m src.run_eval` | 8-question end-to-end evaluation; writes `eval/results.json` | Yes (8 calls) |
 | `python -m scripts.migrate_documents` | Upserts every `.txt` file into Cosmos DB `content` | No (writes to Cosmos DB) |
-| `python -m scripts.index_chunks` | Chunks, embeds and upserts all chunks into Cosmos DB `chunks` | No (writes to Cosmos DB) |
+| `python -m scripts.index_chunks` | Chunks, embeds and upserts all chunks into Cosmos DB `chunks`, then deletes stale chunks | No (writes to Cosmos DB) |
 | `python -m scripts.test_vector_search` | Top 3 `VectorDistance` results from Cosmos DB for one question | No |
 
 ---
@@ -676,7 +687,7 @@ docker run --rm -p 8000:8000 --env-file .env ask-bach-api
 | Image registry | **Azure Container Registry** (Basic), versioned tags (e.g. `ask-bach-api:v2`) |
 | Registry auth | **User-assigned managed identity** with the `AcrPull` role; no registry passwords in the app |
 | LLM credential | `groq-api-key` **Container Apps secret**, exposed to the container as `GROQ_API_KEY` via `secretref` |
-| Knowledge base *(main branch, not yet deployed)* | **Azure Cosmos DB for NoSQL** `bach-rag-cosmos-central` (Central US, free tier, vector search on), database `ask-bach`, accessed with Entra ID. See [ADR 0001](docs/adr/0001-move-knowledge-base-to-cosmos-db.md) for the setup and the three steps needed before the next image will start in Azure. |
+| Knowledge base | **Azure Cosmos DB for NoSQL** `bach-rag-cosmos-central` (Central US, free tier, vector search on), database `ask-bach`, accessed with Entra ID. See [ADR 0001](docs/adr/0001-move-knowledge-base-to-cosmos-db.md) for the setup and deployment steps. |
 
 ### Deploying from scratch
 
@@ -998,7 +1009,7 @@ Each step changed **one variable** and was measured before moving on.
 
 | Metric | Observed |
 |---|---|
-| Corpus | 6 documents, 33 chunks, about 32.5 KB |
+| Corpus | 21 documents, 115 chunks, about 90.7 KB |
 | Retrieval latency | Milliseconds |
 | End-to-end latency | 0.4–1.3 s per question, dominated by the Groq call |
 | Peak memory after startup | About 600 MB (measured locally); production allocation is 2 GiB |
@@ -1032,9 +1043,8 @@ Each step changed **one variable** and was measured before moving on.
 - No automated tests, and no custom error handling (upstream failures surface as `500`).
 - No API rate limiting or authentication.
 - `load_chunks()` runs once per index, so the Cosmos DB documents query runs twice at startup.
-- The Cosmos DB migration isn't deployed yet. The next image won't start in Azure until the SDKs are in `requirements.txt` and the managed identity has Cosmos DB access ([details](docs/adr/0001-move-knowledge-base-to-cosmos-db.md#before-deploying-to-container-apps)).
 - Startup now depends on Cosmos DB being reachable, and the account (Central US) is in a different region from the app (Canada Central).
-- Deleting a `.txt` file doesn't remove its items from Cosmos DB, because the upload scripts only upsert.
+- Deleting a `.txt` file doesn't remove its document from the `content` container, because `migrate_documents` only upserts (stale chunks are cleaned up by `index_chunks`).
 - The default PyTorch wheel pulls CUDA libraries on Linux, making the image several GB; a CPU-only wheel would shrink it substantially.
 
 ---
@@ -1068,7 +1078,7 @@ Each step changed **one variable** and was measured before moving on.
 | `ModuleNotFoundError: No module named 'azure'` (container) | `azure-cosmos` and `azure-identity` are missing from `app/requirements.txt`. Add them and rebuild. |
 | `DefaultAzureCredential failed to retrieve a token` | Locally: run `az login`. In Azure: set `AZURE_CLIENT_ID` to the user-assigned identity's client ID. |
 | Cosmos DB `403 Forbidden` (`does not have required RBAC permissions`) | The identity has no data-plane role. Use `az cosmosdb sql role assignment create`; see [ADR 0001](docs/adr/0001-move-knowledge-base-to-cosmos-db.md#before-deploying-to-container-apps). |
-| A deleted document still shows up in answers | The upload scripts only upsert. Delete its item from the `content` container (and its chunks from `chunks`), then restart the app. |
+| A deleted document still shows up in answers | `migrate_documents` only upserts. Delete its item from the `content` container, re-run `python -m scripts.index_chunks` to drop its chunks, then restart the app. |
 
 ---
 
