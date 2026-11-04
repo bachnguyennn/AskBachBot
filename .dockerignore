@@ -1,0 +1,13 @@
+# Only app/requirements.txt and app/src/ are copied into the image; keep the build
+# context small and keep secrets out of it.
+.git
+.venv
+.env
+**/__pycache__
+**/.pytest_cache
+**/.ruff_cache
+docs
+frontend
+app/tests
+app/eval
+README.md
