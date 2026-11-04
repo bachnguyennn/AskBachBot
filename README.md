@@ -2,7 +2,7 @@
 
 **A chatbot on my portfolio that answers questions about my experience, projects and research, and shows the sources behind every answer.**
 
-**[Try it on my portfolio →](https://bachnguyennn.github.io)** · [Live API docs](https://ask-bach-api.yellowbush-fb5a973b.canadacentral.azurecontainerapps.io/docs) *(the first request after idle can take a few seconds while the server wakes up)*
+**[Try it on my portfolio →](https://bachnguyennn.github.io)** · [Live API docs](https://ask-bach-api.yellowbush-fb5a973b.canadacentral.azurecontainerapps.io/docs) *(the first request after idle takes about 10 s while the server wakes up)*
 
 [![CI](https://github.com/bachnguyennn/AskBachBot/actions/workflows/ci.yml/badge.svg)](https://github.com/bachnguyennn/AskBachBot/actions/workflows/ci.yml)
 ![Python](https://img.shields.io/badge/python-3.12-3776AB?logo=python&logoColor=white)
@@ -29,7 +29,7 @@ If the knowledge base doesn't cover a question, it says so instead of guessing, 
 - **Hybrid retrieval.** Semantic search (MiniLM embeddings in Azure Cosmos DB vector search) and keyword search (BM25), merged with Reciprocal Rank Fusion. Each method catches questions the other misses.
 - **Sources the model can't invent.** The LLM (Groq, strict JSON schema) returns only integer evidence IDs; Python maps them to the real passages. Whether every sentence is supported by its source isn't measured yet; that's next on the [roadmap](docs/technical-deep-dive.md#roadmap).
 - **Measured, not tuned by feel.** A hand-labelled retrieval benchmark runs in CI on every push and fails the build if quality drops.
-- **Built to stay up on a $0 budget.** Clean `503` fallback when an upstream service fails, per-IP rate limiting to protect the free LLM quota, keyless auth to Azure via managed identity, CPU-only container image with the model baked in.
+- **Built to stay up on a $0 budget.** Clean `503` fallback when an upstream service fails, per-IP rate limiting to protect the free LLM quota, keyless auth to Azure via managed identity, CPU-only container image with the model baked in (image 3.26 GB → 0.6 GB, cold start 32 s → 10.6 s).
 
 ## How it works
 

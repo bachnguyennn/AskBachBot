@@ -49,7 +49,7 @@ When the knowledge base does not contain the answer, it declines instead of gues
 - **Measured, not tuned by feel:** each retrieval change was tested one variable at a time against a frozen benchmark, and the [limitations of that benchmark](#interpreting-the-numbers) are stated explicitly.
 - **Deployed:** Docker image in Azure Container Registry, running on Azure Container Apps, pulled with a managed identity, and called over HTTPS from a GitHub Pages / Astro front end.
 
-> **Status (2026-11-04):** live in production (`ask-bach-api:v5`, Cosmos DB-backed) and called by the portfolio site. Tests, a retrieval-eval regression gate and lint run in GitHub Actions on every push.
+> **Status (2026-11-04):** live in production (`ask-bach-api:v6`, Cosmos DB-backed) and called by the portfolio site. Tests, a retrieval-eval regression gate and lint run in GitHub Actions on every push.
 
 ---
 
@@ -259,7 +259,7 @@ flowchart TD
 |---|---|---|---|
 | **Authoring** | Manually, when profile information changes | Edit or add `.txt` files in `app/data/documents/`, then upload them to Cosmos DB (see [Adding or updating a document](#adding-or-updating-a-document)). | A few RUs per upsert. |
 | **Image build** | `docker buildx build` | Code is copied into the image with a CPU-only PyTorch build, and the embedding model is downloaded into the image. Indexes are **not** precomputed. | One-off. |
-| **Startup** | FastAPI lifespan warm-up (container start or `uvicorn` launch) | The embedding model is loaded from the image, documents are queried from Cosmos DB **once** and chunked, and the BM25 index is built. A warm-up failure is logged, not fatal; the next request retries. | About 5 s locally. Before the Dockerfile change, a cold request to production took 32 s (measured 2026-11-04). | |
+| **Startup** | FastAPI lifespan warm-up (container start or `uvicorn` launch) | The embedding model is loaded from the image, documents are queried from Cosmos DB **once** and chunked, and the BM25 index is built. A warm-up failure is logged, not fatal; the next request retries. | Warm-up about 7 s in production. A cold request (scale from zero) takes **10.6 s**, down from 32 s before the Dockerfile change (single measurements, 2026-11-04). | |
 | **Request** | Every `POST /ask` | Retrieval, fusion, context assembly, one LLM call, source resolution. | Retrieval takes milliseconds; the Groq call dominates (about 0.4–1.3 s observed). |
 
 **Dense retrieval runs in Cosmos DB.** Chunk embeddings are computed offline by `scripts.index_chunks` and stored in the `chunks` container, and `HybridRetriever` gets its dense candidates from a `VectorDistance` query (`retrieve_dense_cosmos` in `src/dense_retriever.py`), one Cosmos DB query per request. The BM25 index lives in process memory. The offline eval and tests swap in `InMemoryDenseIndex`, which gives identical rankings because the Cosmos DB index is `flat` (exact).
@@ -698,7 +698,7 @@ docker run --rm -p 8000:8000 --env-file .env ask-bach-api
 | Ingress | External, HTTPS, target port `8000` |
 | Resources | **1 vCPU / 2 GiB** per replica |
 | Scaling | Default scale rule (min replicas 0), so the app scales to zero when idle |
-| Image registry | **Azure Container Registry** (Basic), versioned tags (production: `ask-bach-api:v5`) |
+| Image registry | **Azure Container Registry** (Basic), versioned tags (production: `ask-bach-api:v6`) |
 | Registry auth | **User-assigned managed identity** with the `AcrPull` role; no registry passwords in the app |
 | LLM credential | `groq-api-key` **Container Apps secret**, exposed to the container as `GROQ_API_KEY` via `secretref` |
 | Knowledge base | **Azure Cosmos DB for NoSQL** `bach-rag-cosmos-central` (Central US, free tier, vector search on), database `ask-bach`, accessed with Entra ID. See [ADR 0001](adr/0001-move-knowledge-base-to-cosmos-db.md) for the setup and deployment steps. |
@@ -786,7 +786,7 @@ Every one of these was hit in practice during the first deployment.
 | 3 | **Under-provisioned container** | At the initial 0.25 vCPU / 0.5 GiB, PyTorch + SentenceTransformers could not finish startup and the revision was marked unhealthy. | Increased to **1 vCPU / 2 GiB**. | Size containers for the model, not the web framework. Peak resident memory is about 600 MB after startup, plus import-time spikes. |
 | 4 | **Secret handling** | The API needs `GROQ_API_KEY` at runtime. | Stored as a Container Apps **secret** and referenced with `secretref`; it is never baked into the image or committed. | Images are artifacts that get copied and cached; secrets belong in the runtime. |
 | 5 | **Registry credentials** | The app needs to pull from a private registry. | A **user-assigned managed identity** with `AcrPull`, so there are no registry passwords in the app configuration. | Prefer identity-based access over shared keys. |
-| 6 | **Cold start** | The app scales to zero. A cold request took **32 s** (measured 2026-11-04, image v5): pulling a multi-GB CUDA-enabled image, downloading the model, then building the index. | Dockerfile now uses CPU-only PyTorch and bakes the model into the image: the linux/amd64 image shrank from **3.26 GB to about 0.6 GB** compressed (measured 2026-11-04). The index is built once in a startup warm-up. **Re-measure the cold start after the next deploy.** | `--min-replicas 1` would remove cold starts entirely but spends Azure credit around the clock. |
+| 6 | **Cold start** | The app scales to zero. A cold request took **32 s** (measured 2026-11-04, image v5): pulling a multi-GB CUDA-enabled image, downloading the model, then building the index. | Dockerfile now uses CPU-only PyTorch and bakes the model into the image: the linux/amd64 image shrank from **3.26 GB to about 0.6 GB** compressed (measured 2026-11-04). The index is built once in a startup warm-up. Cold start fell from **32 s to 10.6 s** (v6, measured 2026-11-04). | `--min-replicas 1` would remove cold starts entirely but spends Azure credit around the clock. |
 
 ---
 
@@ -916,7 +916,7 @@ Each step changed **one variable** and was measured before moving on.
 | Retrieval latency | Milliseconds |
 | End-to-end latency | 0.4–1.3 s per question, dominated by the Groq call |
 | Peak memory after startup | About 600 MB (measured locally); production allocation is 2 GiB |
-| Cold start | **32 s** for the first request to production after idle (2026-11-04, image v5, before the CPU-only/baked-model Dockerfile). Local warm-up after the change: about 5 s. Re-measure after the next deploy. |
+| Cold start | **10.6 s** for the first request after scale-to-zero (v6), down from **32 s** (v5). Single measurements on 2026-11-04. |
 | LLM calls | Exactly one per `/ask` |
 
 ---
@@ -950,11 +950,10 @@ Each step changed **one variable** and was measured before moving on.
 
 ## Roadmap
 
-1. **Deploy and re-measure the cold start** with the CPU-only, model-baked image.
-2. **Credible evaluation:** grow to 30+ questions, at least 10 written by other people, plus out-of-scope and prompt-injection cases; report sample sizes.
-3. **Answer-level metrics:** LLM-as-judge faithfulness and refusal rate on about 25 questions, run with the same structured pipeline as production.
-4. **Long-context baseline:** the whole corpus (about 90 KB) may fit in one prompt. Compare quality, latency and tokens against RAG and record the decision as ADR 0002.
-5. **Retrieval** (only once the larger eval set exists): stemming, down-weighting hub chunks, cross-encoder re-ranking, heading-aware chunking.
+1. **Credible evaluation:** grow to 30+ questions, at least 10 written by other people, plus out-of-scope and prompt-injection cases; report sample sizes.
+2. **Answer-level metrics:** LLM-as-judge faithfulness and refusal rate on about 25 questions, run with the same structured pipeline as production.
+3. **Long-context baseline:** the whole corpus (about 90 KB) may fit in one prompt. Compare quality, latency and tokens against RAG and record the decision as ADR 0002.
+4. **Retrieval** (only once the larger eval set exists): stemming, down-weighting hub chunks, cross-encoder re-ranking, heading-aware chunking.
 
 ---
 
