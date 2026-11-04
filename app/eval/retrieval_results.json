@@ -1,60 +1,55 @@
 {
+  "backend": "disk",
   "config": {
     "candidate_k": 10,
     "final_k": 3,
     "rrf_k": 60,
     "dense": "all-MiniLM-L6-v2 + cosine",
-    "bm25": "regex tokenizer + stopwords, no stemming, 'bach' kept"
+    "bm25": "regex tokenizer + stopwords, no stemming"
+  },
+  "summary": {
+    "Dense": {
+      "recall": 0.8,
+      "precision": 0.4666666666666667,
+      "mrr": 0.75
+    },
+    "BM25": {
+      "recall": 0.9,
+      "precision": 0.6333333333333333,
+      "mrr": 0.8
+    },
+    "Hybrid": {
+      "recall": 1.0,
+      "precision": 0.6,
+      "mrr": 0.8833333333333334
+    }
   },
   "results": [
     {
       "question": "What did Bach do at CMHA?",
       "variant": "original",
-      "relevant": [
-        [
-          "about.txt",
-          1
-        ],
-        [
-          "cmha.txt",
-          0
-        ],
-        [
-          "cmha.txt",
-          1
-        ],
-        [
-          "cmha.txt",
-          2
-        ],
-        [
-          "cmha.txt",
-          3
-        ]
-      ],
       "systems": {
         "Dense": {
           "hit": true,
           "relevant_in_top_k": 1,
           "reciprocal_rank": 1.0,
-          "first_relevant_rank": 1,
           "top_k": [
             {
               "source": "cmha.txt",
               "chunk_id": 3,
-              "score": 0.484208345413208,
+              "score": 0.4842,
               "relevant": true
             },
             {
               "source": "education.txt",
               "chunk_id": 3,
-              "score": 0.4838297367095947,
+              "score": 0.4838,
               "relevant": false
             },
             {
               "source": "about.txt",
               "chunk_id": 0,
-              "score": 0.47642624378204346,
+              "score": 0.4764,
               "relevant": false
             }
           ]
@@ -63,24 +58,23 @@
           "hit": true,
           "relevant_in_top_k": 3,
           "reciprocal_rank": 1.0,
-          "first_relevant_rank": 1,
           "top_k": [
             {
               "source": "cmha.txt",
               "chunk_id": 3,
-              "score": 4.207190703718172,
+              "score": 7.6501,
               "relevant": true
             },
             {
               "source": "cmha.txt",
               "chunk_id": 2,
-              "score": 3.970596636426703,
+              "score": 7.1898,
               "relevant": true
             },
             {
               "source": "cmha.txt",
               "chunk_id": 0,
-              "score": 3.6888190446591507,
+              "score": 6.6984,
               "relevant": true
             }
           ]
@@ -89,24 +83,23 @@
           "hit": true,
           "relevant_in_top_k": 2,
           "reciprocal_rank": 1.0,
-          "first_relevant_rank": 1,
           "top_k": [
             {
               "source": "cmha.txt",
               "chunk_id": 3,
-              "score": 0.03278688524590164,
+              "score": 0.0328,
               "relevant": true
             },
             {
               "source": "cmha.txt",
               "chunk_id": 2,
-              "score": 0.03128054740957967,
+              "score": 0.0308,
               "relevant": true
             },
             {
               "source": "about.txt",
               "chunk_id": 0,
-              "score": 0.03057889822595705,
+              "score": 0.0304,
               "relevant": false
             }
           ]
@@ -116,52 +109,29 @@
     {
       "question": "What Azure experience does Bach have?",
       "variant": "original",
-      "relevant": [
-        [
-          "about.txt",
-          0
-        ],
-        [
-          "about.txt",
-          1
-        ],
-        [
-          "azure.txt",
-          0
-        ],
-        [
-          "azure.txt",
-          1
-        ],
-        [
-          "azure.txt",
-          2
-        ]
-      ],
       "systems": {
         "Dense": {
           "hit": true,
           "relevant_in_top_k": 2,
           "reciprocal_rank": 1.0,
-          "first_relevant_rank": 1,
           "top_k": [
             {
               "source": "about.txt",
               "chunk_id": 0,
-              "score": 0.6204890608787537,
+              "score": 0.6205,
               "relevant": true
+            },
+            {
+              "source": "ask_bach.txt",
+              "chunk_id": 11,
+              "score": 0.6161,
+              "relevant": false
             },
             {
               "source": "azure.txt",
               "chunk_id": 2,
-              "score": 0.5896916389465332,
+              "score": 0.5897,
               "relevant": true
-            },
-            {
-              "source": "about.txt",
-              "chunk_id": 4,
-              "score": 0.5165060758590698,
-              "relevant": false
             }
           ]
         },
@@ -169,51 +139,49 @@
           "hit": true,
           "relevant_in_top_k": 3,
           "reciprocal_rank": 1.0,
-          "first_relevant_rank": 1,
           "top_k": [
             {
               "source": "azure.txt",
               "chunk_id": 2,
-              "score": 5.392446747882272,
+              "score": 7.8999,
               "relevant": true
             },
             {
               "source": "azure.txt",
               "chunk_id": 0,
-              "score": 4.8767417652719125,
+              "score": 7.2097,
               "relevant": true
             },
             {
               "source": "azure.txt",
               "chunk_id": 1,
-              "score": 4.600550501968429,
+              "score": 6.5497,
               "relevant": true
             }
           ]
         },
         "Hybrid": {
           "hit": true,
-          "relevant_in_top_k": 3,
+          "relevant_in_top_k": 2,
           "reciprocal_rank": 1.0,
-          "first_relevant_rank": 1,
           "top_k": [
             {
               "source": "azure.txt",
               "chunk_id": 2,
-              "score": 0.03252247488101534,
+              "score": 0.0323,
               "relevant": true
             },
             {
               "source": "about.txt",
               "chunk_id": 0,
-              "score": 0.032018442622950824,
+              "score": 0.0313,
               "relevant": true
             },
             {
-              "source": "azure.txt",
+              "source": "ask_bach.txt",
               "chunk_id": 0,
-              "score": 0.030834914611005692,
-              "relevant": true
+              "score": 0.0305,
+              "relevant": false
             }
           ]
         }
@@ -222,112 +190,79 @@
     {
       "question": "What is Bach researching?",
       "variant": "original",
-      "relevant": [
-        [
-          "about.txt",
-          0
-        ],
-        [
-          "about.txt",
-          1
-        ],
-        [
-          "education.txt",
-          1
-        ],
-        [
-          "research.txt",
-          0
-        ],
-        [
-          "research.txt",
-          1
-        ],
-        [
-          "research.txt",
-          5
-        ],
-        [
-          "research.txt",
-          6
-        ]
-      ],
       "systems": {
         "Dense": {
           "hit": true,
-          "relevant_in_top_k": 1,
-          "reciprocal_rank": 0.5,
-          "first_relevant_rank": 2,
+          "relevant_in_top_k": 2,
+          "reciprocal_rank": 1.0,
           "top_k": [
+            {
+              "source": "research.txt",
+              "chunk_id": 3,
+              "score": 0.5274,
+              "relevant": true
+            },
             {
               "source": "education.txt",
               "chunk_id": 3,
-              "score": 0.5123941898345947,
+              "score": 0.5124,
               "relevant": false
             },
             {
               "source": "about.txt",
               "chunk_id": 0,
-              "score": 0.49191686511039734,
+              "score": 0.4919,
               "relevant": true
-            },
-            {
-              "source": "about.txt",
-              "chunk_id": 4,
-              "score": 0.47779494524002075,
-              "relevant": false
             }
           ]
         },
         "BM25": {
           "hit": true,
           "relevant_in_top_k": 1,
-          "reciprocal_rank": 0.3333333333333333,
-          "first_relevant_rank": 3,
+          "reciprocal_rank": 1.0,
           "top_k": [
+            {
+              "source": "about.txt",
+              "chunk_id": 1,
+              "score": 4.3125,
+              "relevant": true
+            },
             {
               "source": "education.txt",
               "chunk_id": 3,
-              "score": 1.4044212638096014,
+              "score": 1.9611,
               "relevant": false
             },
             {
-              "source": "about.txt",
-              "chunk_id": 4,
-              "score": 1.3772614265722354,
-              "relevant": false
-            },
-            {
-              "source": "about.txt",
+              "source": "ask_bach.txt",
               "chunk_id": 0,
-              "score": 1.3008768848934313,
-              "relevant": true
+              "score": 1.9514,
+              "relevant": false
             }
           ]
         },
         "Hybrid": {
           "hit": true,
           "relevant_in_top_k": 1,
-          "reciprocal_rank": 0.5,
-          "first_relevant_rank": 2,
+          "reciprocal_rank": 0.3333333333333333,
           "top_k": [
             {
               "source": "education.txt",
               "chunk_id": 3,
-              "score": 0.03278688524590164,
+              "score": 0.0323,
+              "relevant": false
+            },
+            {
+              "source": "about.txt",
+              "chunk_id": 4,
+              "score": 0.0312,
               "relevant": false
             },
             {
               "source": "about.txt",
               "chunk_id": 0,
-              "score": 0.03200204813108039,
+              "score": 0.0308,
               "relevant": true
-            },
-            {
-              "source": "about.txt",
-              "chunk_id": 4,
-              "score": 0.03200204813108039,
-              "relevant": false
             }
           ]
         }
@@ -336,43 +271,28 @@
     {
       "question": "When does Bach graduate?",
       "variant": "original",
-      "relevant": [
-        [
-          "about.txt",
-          0
-        ],
-        [
-          "education.txt",
-          0
-        ],
-        [
-          "education.txt",
-          3
-        ]
-      ],
       "systems": {
         "Dense": {
           "hit": true,
           "relevant_in_top_k": 2,
           "reciprocal_rank": 1.0,
-          "first_relevant_rank": 1,
           "top_k": [
             {
               "source": "education.txt",
               "chunk_id": 3,
-              "score": 0.6820195317268372,
+              "score": 0.682,
               "relevant": true
             },
             {
               "source": "about.txt",
               "chunk_id": 0,
-              "score": 0.530997633934021,
+              "score": 0.531,
               "relevant": true
             },
             {
               "source": "about.txt",
               "chunk_id": 4,
-              "score": 0.46003544330596924,
+              "score": 0.46,
               "relevant": false
             }
           ]
@@ -381,24 +301,23 @@
           "hit": true,
           "relevant_in_top_k": 2,
           "reciprocal_rank": 0.5,
-          "first_relevant_rank": 2,
           "top_k": [
             {
               "source": "about.txt",
               "chunk_id": 4,
-              "score": 4.318800227413271,
+              "score": 6.4688,
               "relevant": false
             },
             {
               "source": "education.txt",
               "chunk_id": 3,
-              "score": 4.204439131609462,
+              "score": 6.2667,
               "relevant": true
             },
             {
               "source": "about.txt",
               "chunk_id": 0,
-              "score": 3.3157121553246167,
+              "score": 4.8101,
               "relevant": true
             }
           ]
@@ -407,24 +326,23 @@
           "hit": true,
           "relevant_in_top_k": 2,
           "reciprocal_rank": 1.0,
-          "first_relevant_rank": 1,
           "top_k": [
             {
               "source": "education.txt",
               "chunk_id": 3,
-              "score": 0.03252247488101534,
+              "score": 0.0325,
               "relevant": true
             },
             {
               "source": "about.txt",
               "chunk_id": 4,
-              "score": 0.032266458495966696,
+              "score": 0.0323,
               "relevant": false
             },
             {
               "source": "about.txt",
               "chunk_id": 0,
-              "score": 0.03200204813108039,
+              "score": 0.032,
               "relevant": true
             }
           ]
@@ -434,35 +352,28 @@
     {
       "question": "What programming languages does Bach know?",
       "variant": "original",
-      "relevant": [
-        [
-          "about.txt",
-          2
-        ]
-      ],
       "systems": {
         "Dense": {
           "hit": false,
           "relevant_in_top_k": 0,
           "reciprocal_rank": 0.0,
-          "first_relevant_rank": 5,
           "top_k": [
             {
               "source": "about.txt",
               "chunk_id": 0,
-              "score": 0.5005384683609009,
+              "score": 0.5005,
               "relevant": false
             },
             {
               "source": "education.txt",
               "chunk_id": 3,
-              "score": 0.47971096634864807,
+              "score": 0.4797,
               "relevant": false
             },
             {
               "source": "about.txt",
               "chunk_id": 4,
-              "score": 0.4312728941440582,
+              "score": 0.4313,
               "relevant": false
             }
           ]
@@ -471,24 +382,23 @@
           "hit": true,
           "relevant_in_top_k": 1,
           "reciprocal_rank": 1.0,
-          "first_relevant_rank": 1,
           "top_k": [
             {
               "source": "about.txt",
               "chunk_id": 2,
-              "score": 7.080744724550648,
+              "score": 9.315,
               "relevant": true
             },
             {
               "source": "azure.txt",
               "chunk_id": 2,
-              "score": 3.5980834935514547,
+              "score": 5.5051,
               "relevant": false
             },
             {
-              "source": "research.txt",
-              "chunk_id": 2,
-              "score": 2.749886224293498,
+              "source": "education.txt",
+              "chunk_id": 3,
+              "score": 1.9611,
               "relevant": false
             }
           ]
@@ -496,25 +406,24 @@
         "Hybrid": {
           "hit": true,
           "relevant_in_top_k": 1,
-          "reciprocal_rank": 1.0,
-          "first_relevant_rank": 1,
+          "reciprocal_rank": 0.5,
           "top_k": [
-            {
-              "source": "about.txt",
-              "chunk_id": 2,
-              "score": 0.03177805800756621,
-              "relevant": true
-            },
             {
               "source": "education.txt",
               "chunk_id": 3,
-              "score": 0.031754032258064516,
+              "score": 0.032,
               "relevant": false
             },
             {
               "source": "about.txt",
-              "chunk_id": 0,
-              "score": 0.031544957774465976,
+              "chunk_id": 2,
+              "score": 0.0318,
+              "relevant": true
+            },
+            {
+              "source": "about.txt",
+              "chunk_id": 4,
+              "score": 0.0313,
               "relevant": false
             }
           ]
@@ -524,51 +433,28 @@
     {
       "question": "Describe Bach's work at the Canadian Mental Health Association.",
       "variant": "paraphrase",
-      "relevant": [
-        [
-          "about.txt",
-          1
-        ],
-        [
-          "cmha.txt",
-          0
-        ],
-        [
-          "cmha.txt",
-          1
-        ],
-        [
-          "cmha.txt",
-          2
-        ],
-        [
-          "cmha.txt",
-          3
-        ]
-      ],
       "systems": {
         "Dense": {
           "hit": true,
           "relevant_in_top_k": 2,
           "reciprocal_rank": 1.0,
-          "first_relevant_rank": 1,
           "top_k": [
             {
               "source": "cmha.txt",
               "chunk_id": 3,
-              "score": 0.5996716022491455,
+              "score": 0.5997,
               "relevant": true
             },
             {
               "source": "cmha.txt",
               "chunk_id": 2,
-              "score": 0.5249360203742981,
+              "score": 0.5249,
               "relevant": true
             },
             {
               "source": "about.txt",
               "chunk_id": 0,
-              "score": 0.4876430630683899,
+              "score": 0.4876,
               "relevant": false
             }
           ]
@@ -577,24 +463,23 @@
           "hit": true,
           "relevant_in_top_k": 3,
           "reciprocal_rank": 1.0,
-          "first_relevant_rank": 1,
           "top_k": [
             {
               "source": "cmha.txt",
               "chunk_id": 0,
-              "score": 12.821303191679728,
+              "score": 23.6524,
               "relevant": true
             },
             {
               "source": "cmha.txt",
               "chunk_id": 3,
-              "score": 11.304212205773304,
+              "score": 21.3392,
               "relevant": true
             },
             {
               "source": "cmha.txt",
               "chunk_id": 2,
-              "score": 9.643051028725901,
+              "score": 16.8471,
               "relevant": true
             }
           ]
@@ -603,24 +488,23 @@
           "hit": true,
           "relevant_in_top_k": 3,
           "reciprocal_rank": 1.0,
-          "first_relevant_rank": 1,
           "top_k": [
             {
               "source": "cmha.txt",
               "chunk_id": 3,
-              "score": 0.03252247488101534,
+              "score": 0.0325,
               "relevant": true
             },
             {
               "source": "cmha.txt",
               "chunk_id": 2,
-              "score": 0.03200204813108039,
+              "score": 0.032,
               "relevant": true
             },
             {
               "source": "cmha.txt",
               "chunk_id": 0,
-              "score": 0.03177805800756621,
+              "score": 0.0318,
               "relevant": true
             }
           ]
@@ -630,104 +514,79 @@
     {
       "question": "What cloud computing work has Bach done?",
       "variant": "paraphrase",
-      "relevant": [
-        [
-          "about.txt",
-          0
-        ],
-        [
-          "about.txt",
-          1
-        ],
-        [
-          "azure.txt",
-          0
-        ],
-        [
-          "azure.txt",
-          1
-        ],
-        [
-          "azure.txt",
-          2
-        ]
-      ],
       "systems": {
         "Dense": {
           "hit": true,
-          "relevant_in_top_k": 2,
+          "relevant_in_top_k": 1,
           "reciprocal_rank": 1.0,
-          "first_relevant_rank": 1,
           "top_k": [
             {
               "source": "about.txt",
               "chunk_id": 0,
-              "score": 0.558006763458252,
+              "score": 0.558,
               "relevant": true
             },
             {
-              "source": "azure.txt",
-              "chunk_id": 2,
-              "score": 0.5356631875038147,
-              "relevant": true
+              "source": "ask_bach.txt",
+              "chunk_id": 0,
+              "score": 0.5577,
+              "relevant": false
             },
             {
-              "source": "about.txt",
-              "chunk_id": 4,
-              "score": 0.4646754264831543,
+              "source": "ask_bach.txt",
+              "chunk_id": 9,
+              "score": 0.5456,
               "relevant": false
             }
           ]
         },
         "BM25": {
-          "hit": true,
-          "relevant_in_top_k": 3,
-          "reciprocal_rank": 1.0,
-          "first_relevant_rank": 1,
+          "hit": false,
+          "relevant_in_top_k": 0,
+          "reciprocal_rank": 0.0,
           "top_k": [
             {
-              "source": "azure.txt",
+              "source": "ask_bach.txt",
+              "chunk_id": 11,
+              "score": 6.8947,
+              "relevant": false
+            },
+            {
+              "source": "research.txt",
               "chunk_id": 2,
-              "score": 4.497422369254324,
-              "relevant": true
+              "score": 6.8146,
+              "relevant": false
             },
             {
-              "source": "about.txt",
-              "chunk_id": 0,
-              "score": 4.414021455542789,
-              "relevant": true
-            },
-            {
-              "source": "azure.txt",
-              "chunk_id": 1,
-              "score": 4.411537498377172,
-              "relevant": true
+              "source": "research.txt",
+              "chunk_id": 3,
+              "score": 6.7526,
+              "relevant": false
             }
           ]
         },
         "Hybrid": {
           "hit": true,
-          "relevant_in_top_k": 3,
+          "relevant_in_top_k": 1,
           "reciprocal_rank": 1.0,
-          "first_relevant_rank": 1,
           "top_k": [
             {
               "source": "about.txt",
               "chunk_id": 0,
-              "score": 0.03252247488101534,
+              "score": 0.032,
               "relevant": true
             },
             {
-              "source": "azure.txt",
-              "chunk_id": 2,
-              "score": 0.03252247488101534,
-              "relevant": true
+              "source": "ask_bach.txt",
+              "chunk_id": 11,
+              "score": 0.0315,
+              "relevant": false
             },
             {
-              "source": "azure.txt",
+              "source": "ask_bach.txt",
               "chunk_id": 0,
-              "score": 0.03125,
-              "relevant": true
+              "score": 0.0315,
+              "relevant": false
             }
           ]
         }
@@ -736,60 +595,29 @@
     {
       "question": "What topic is Bach's undergraduate thesis focused on?",
       "variant": "paraphrase",
-      "relevant": [
-        [
-          "about.txt",
-          0
-        ],
-        [
-          "about.txt",
-          1
-        ],
-        [
-          "education.txt",
-          1
-        ],
-        [
-          "research.txt",
-          0
-        ],
-        [
-          "research.txt",
-          1
-        ],
-        [
-          "research.txt",
-          5
-        ],
-        [
-          "research.txt",
-          6
-        ]
-      ],
       "systems": {
         "Dense": {
           "hit": true,
-          "relevant_in_top_k": 1,
+          "relevant_in_top_k": 2,
           "reciprocal_rank": 0.5,
-          "first_relevant_rank": 2,
           "top_k": [
             {
               "source": "education.txt",
               "chunk_id": 3,
-              "score": 0.5473461151123047,
+              "score": 0.5473,
               "relevant": false
             },
             {
-              "source": "about.txt",
-              "chunk_id": 0,
-              "score": 0.4752007722854614,
+              "source": "research.txt",
+              "chunk_id": 3,
+              "score": 0.5408,
               "relevant": true
             },
             {
               "source": "about.txt",
-              "chunk_id": 4,
-              "score": 0.4604390859603882,
-              "relevant": false
+              "chunk_id": 0,
+              "score": 0.4752,
+              "relevant": true
             }
           ]
         },
@@ -797,24 +625,23 @@
           "hit": true,
           "relevant_in_top_k": 3,
           "reciprocal_rank": 1.0,
-          "first_relevant_rank": 1,
           "top_k": [
             {
               "source": "research.txt",
-              "chunk_id": 6,
-              "score": 3.863631364318659,
+              "chunk_id": 3,
+              "score": 9.8863,
               "relevant": true
             },
             {
               "source": "research.txt",
               "chunk_id": 0,
-              "score": 3.658123568741079,
+              "score": 9.1449,
               "relevant": true
             },
             {
-              "source": "about.txt",
-              "chunk_id": 0,
-              "score": 3.5186977912981297,
+              "source": "education.txt",
+              "chunk_id": 1,
+              "score": 8.616,
               "relevant": true
             }
           ]
@@ -823,24 +650,23 @@
           "hit": true,
           "relevant_in_top_k": 2,
           "reciprocal_rank": 1.0,
-          "first_relevant_rank": 1,
           "top_k": [
             {
               "source": "research.txt",
-              "chunk_id": 6,
-              "score": 0.032018442622950824,
+              "chunk_id": 3,
+              "score": 0.0325,
               "relevant": true
             },
             {
               "source": "about.txt",
               "chunk_id": 0,
-              "score": 0.03200204813108039,
+              "score": 0.031,
               "relevant": true
             },
             {
-              "source": "education.txt",
+              "source": "about.txt",
               "chunk_id": 3,
-              "score": 0.031099324975891997,
+              "score": 0.0297,
               "relevant": false
             }
           ]
@@ -850,43 +676,28 @@
     {
       "question": "When is Bach expected to finish university?",
       "variant": "paraphrase",
-      "relevant": [
-        [
-          "about.txt",
-          0
-        ],
-        [
-          "education.txt",
-          0
-        ],
-        [
-          "education.txt",
-          3
-        ]
-      ],
       "systems": {
         "Dense": {
           "hit": true,
           "relevant_in_top_k": 2,
           "reciprocal_rank": 1.0,
-          "first_relevant_rank": 1,
           "top_k": [
             {
               "source": "education.txt",
               "chunk_id": 3,
-              "score": 0.687977135181427,
+              "score": 0.688,
               "relevant": true
             },
             {
               "source": "about.txt",
               "chunk_id": 0,
-              "score": 0.49497243762016296,
+              "score": 0.495,
               "relevant": true
             },
             {
               "source": "about.txt",
               "chunk_id": 4,
-              "score": 0.4285454750061035,
+              "score": 0.4285,
               "relevant": false
             }
           ]
@@ -894,25 +705,24 @@
         "BM25": {
           "hit": true,
           "relevant_in_top_k": 2,
-          "reciprocal_rank": 0.5,
-          "first_relevant_rank": 2,
+          "reciprocal_rank": 1.0,
           "top_k": [
             {
-              "source": "projects.txt",
+              "source": "education.txt",
               "chunk_id": 3,
-              "score": 5.05261478355086,
+              "score": 7.8475,
+              "relevant": true
+            },
+            {
+              "source": "project_data_engineering.txt",
+              "chunk_id": 4,
+              "score": 7.7323,
               "relevant": false
             },
             {
               "source": "education.txt",
-              "chunk_id": 3,
-              "score": 4.690774045778325,
-              "relevant": true
-            },
-            {
-              "source": "about.txt",
               "chunk_id": 0,
-              "score": 4.133376519695477,
+              "score": 7.0764,
               "relevant": true
             }
           ]
@@ -921,24 +731,23 @@
           "hit": true,
           "relevant_in_top_k": 3,
           "reciprocal_rank": 1.0,
-          "first_relevant_rank": 1,
           "top_k": [
             {
               "source": "education.txt",
               "chunk_id": 3,
-              "score": 0.03252247488101534,
+              "score": 0.0328,
               "relevant": true
             },
             {
               "source": "about.txt",
               "chunk_id": 0,
-              "score": 0.03200204813108039,
+              "score": 0.0318,
               "relevant": true
             },
             {
               "source": "education.txt",
               "chunk_id": 0,
-              "score": 0.031009615384615385,
+              "score": 0.031,
               "relevant": true
             }
           ]
@@ -948,35 +757,28 @@
     {
       "question": "Which coding languages can Bach use?",
       "variant": "paraphrase",
-      "relevant": [
-        [
-          "about.txt",
-          2
-        ]
-      ],
       "systems": {
         "Dense": {
           "hit": false,
           "relevant_in_top_k": 0,
           "reciprocal_rank": 0.0,
-          "first_relevant_rank": 4,
           "top_k": [
+            {
+              "source": "projects.txt",
+              "chunk_id": 0,
+              "score": 0.4428,
+              "relevant": false
+            },
             {
               "source": "about.txt",
               "chunk_id": 0,
-              "score": 0.4399070143699646,
+              "score": 0.4399,
               "relevant": false
             },
             {
               "source": "education.txt",
               "chunk_id": 3,
-              "score": 0.3994389474391937,
-              "relevant": false
-            },
-            {
-              "source": "about.txt",
-              "chunk_id": 4,
-              "score": 0.3827453553676605,
+              "score": 0.3994,
               "relevant": false
             }
           ]
@@ -984,25 +786,24 @@
         "BM25": {
           "hit": true,
           "relevant_in_top_k": 1,
-          "reciprocal_rank": 1.0,
-          "first_relevant_rank": 1,
+          "reciprocal_rank": 0.5,
           "top_k": [
             {
-              "source": "about.txt",
-              "chunk_id": 2,
-              "score": 3.886506057278625,
-              "relevant": true
-            },
-            {
-              "source": "research.txt",
-              "chunk_id": 5,
-              "score": 3.4297135405178967,
+              "source": "project_fasttext.txt",
+              "chunk_id": 0,
+              "score": 6.0222,
               "relevant": false
             },
             {
-              "source": "projects.txt",
-              "chunk_id": 8,
-              "score": 3.306997142650124,
+              "source": "about.txt",
+              "chunk_id": 2,
+              "score": 5.1147,
+              "relevant": true
+            },
+            {
+              "source": "project_cpg_cascadedvit.txt",
+              "chunk_id": 10,
+              "score": 4.6144,
               "relevant": false
             }
           ]
@@ -1011,24 +812,23 @@
           "hit": true,
           "relevant_in_top_k": 1,
           "reciprocal_rank": 1.0,
-          "first_relevant_rank": 1,
           "top_k": [
             {
               "source": "about.txt",
               "chunk_id": 2,
-              "score": 0.032018442622950824,
+              "score": 0.0306,
               "relevant": true
             },
             {
-              "source": "research.txt",
-              "chunk_id": 6,
-              "score": 0.030330882352941176,
+              "source": "ask_bach.txt",
+              "chunk_id": 0,
+              "score": 0.0303,
               "relevant": false
             },
             {
               "source": "projects.txt",
               "chunk_id": 0,
-              "score": 0.02964426877470356,
+              "score": 0.0164,
               "relevant": false
             }
           ]
