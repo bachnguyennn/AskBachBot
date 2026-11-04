@@ -1,11 +1,13 @@
 # ADR 0001: Move the knowledge base to Azure Cosmos DB for NoSQL
 
-- **Status:** Accepted, migration in progress (phase 1 of 3 done, see [Migration status](#migration-status))
+- **Status:** Accepted, implemented. In production since image `ask-bach-api:v5` (see [Migration status](#migration-status))
 - **Date:** 2026-10-07
 - **Deciders:** Bach Nguyen
-- **Relates to:** README sections [Data pipeline](../../README.md#data-pipeline) and [Design decisions](../../README.md#design-decisions)
+- **Relates to:** [Data pipeline](../technical-deep-dive.md#data-pipeline) and [Design decisions](../technical-deep-dive.md#design-decisions) in the technical deep dive
 
 ## Context
+
+*Numbers in this section describe the corpus when the decision was made (6 documents, 33 chunks). It has since grown to 21 documents and 115 chunks.*
 
 Until this change, the six profile documents in `app/data/documents/*.txt` were **baked into the Docker image** and read from disk at startup. Both indexes (dense MiniLM and BM25) were rebuilt in memory on every container start. The README's earlier position was that a vector database "would add a service and a sync problem without improving quality" at 33 chunks.
 
@@ -19,7 +21,7 @@ Constraints:
 
 - **Cost:** must fit the Azure for Students subscription. Cosmos DB's free tier (first 1,000 RU/s and 25 GB per account) covers this.
 - **Auth:** no keys in code or in the image. The existing deployment already uses a managed identity for ACR, so the same pattern should apply to data.
-- **Evaluation:** `(source, chunk_id)` is the stable chunk identity used by the eval labels in `src/eval_retrieval.py`. The migration must not renumber chunks.
+- **Evaluation:** `(source, chunk_id)` is the stable chunk identity used by the eval labels in `eval/benchmark.py`. The migration must not renumber chunks.
 
 ## Decision
 
@@ -101,17 +103,17 @@ The endpoint is set in `app/src/database.py`. The vector and indexing policies f
 
 ## Migration status
 
-As of 2026-10-08 (verified against the live account and code):
+Phases 1–2 verified 2026-10-08; phase 3 verified 2026-11-04 against the live Container App:
 
 | Phase | Scope | Status |
 |---|---|---|
 | **1. Documents in Cosmos DB** | `migrate_documents.py` uploads documents; `load_documents()` reads them from the `content` container | ✅ Done locally. 6 documents, which chunk into the same **33 chunks** as before, so eval labels remain valid. |
-| **2. Vectors in Cosmos DB** | `index_chunks.py` stores embeddings; `test_vector_search.py` checks `VectorDistance` queries | ✅ Done locally (2026-10-08). `retrieve_hybrid` gets dense candidates from `src/cosmos_retriever.py`. The [parity check](../../README.md#cosmos-db-dense-retrieval-parity-check) shows the same top 3 and scores as in-memory search on all 10 benchmark questions. |
-| **3. Production deployment** | The Container App reads from Cosmos DB | ❌ Not deployed. Production still runs `ask-bach-api:v4` (file-based). The blockers are listed below. |
+| **2. Vectors in Cosmos DB** | `index_chunks.py` stores embeddings; `VectorDistance` queries serve dense retrieval | ✅ Done locally (2026-10-08). Dense candidates come from `retrieve_dense_cosmos` (originally `src/cosmos_retriever.py`, now `src/dense_retriever.py`). The [parity check](../technical-deep-dive.md#cosmos-db-parity-check) shows the same top 3 and scores as in-memory search on all 10 benchmark questions. |
+| **3. Production deployment** | The Container App reads from Cosmos DB | ✅ Done. Production runs `ask-bach-api:v5` with `COSMOS_ENDPOINT` and `AZURE_CLIENT_ID` set (verified 2026-11-04). The blockers below were resolved. |
 
 ### Before deploying to Container Apps
 
-Each of these will stop the current code from starting in Azure:
+*Kept for the record; all of these were resolved for v5.* Each of these would have stopped the code from starting in Azure:
 
 1. **Add the SDKs to `app/requirements.txt`.** `azure-cosmos` and `azure-identity` are installed locally (4.17.1 / 1.26.0) but are **not** in `requirements.txt`, so the image will fail with `ModuleNotFoundError: azure`.
 2. **Grant the managed identity data-plane access.** Right now only your user account has a Cosmos DB role assignment. `ask-bach-identity` (used today only for `AcrPull`) needs one too:
