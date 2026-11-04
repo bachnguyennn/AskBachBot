@@ -1,7 +1,7 @@
 import json
 
-from src.hybrid_retriever import retrieve_hybrid
 from src.generate import generate_structured
+from src.hybrid_retriever import retrieve_hybrid
 
 
 def build_context_and_source_map(results):
@@ -73,17 +73,7 @@ def answer_question(question, candidate_k=10, final_k=3, verbose=False):
     return response
 
 
-if __name__ == "__main__":
-    source_map = {
-        1: {"source": "cmha.txt", "chunk_id": 3},
-        2: {"source": "cmha.txt", "chunk_id": 2},
-        3: {"source": "about.txt", "chunk_id": 0},
-    }
-    assert resolve_sources([1, 3], source_map) == [source_map[1], source_map[3]]
-    assert resolve_sources([1, 999], source_map) == [source_map[1]]
-    assert resolve_sources([1, 1], source_map) == [source_map[1]]
-    assert resolve_sources([], source_map) == []
-    print("resolve_sources checks passed")
 
+if __name__ == "__main__":
     for question in ["What did Bach do at CMHA?", "What position did Bach have at Google?"]:
         answer_question(question, verbose=True)

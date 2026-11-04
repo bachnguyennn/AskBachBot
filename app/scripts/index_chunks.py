@@ -1,26 +1,19 @@
-from sentence_transformers import SentenceTransformer
+"""Chunk the documents in Cosmos DB, embed them, and upsert into the `chunks`
+container. Removes chunks left over from older document versions.
 
-from src.database import client
+Run from app/:  python -m scripts.index_chunks
+"""
+
+from src.database import get_container
+from src.dense_retriever import embed
 from src.load_documents import load_chunks
 
+chunks_container = get_container("chunks")
 
-model = SentenceTransformer("all-MiniLM-L6-v2")
+chunks = load_chunks(source="cosmos")
+embeddings = embed([chunk["text"] for chunk in chunks])
 
-database = client.get_database_client("ask-bach")
-chunks_container = database.get_container_client("chunks")
-
-
-chunks = load_chunks()
-
-texts = [chunk["text"] for chunk in chunks]
-
-embeddings = model.encode(
-    texts,
-    convert_to_numpy=True,
-    show_progress_bar=True,
-)
-
-for chunk, embedding in zip(chunks, embeddings):
+for chunk, embedding in zip(chunks, embeddings, strict=True):
     item = {
         "id": f"{chunk['source'].replace('.txt', '')}-{chunk['chunk_id']}",
         "source": chunk["source"],

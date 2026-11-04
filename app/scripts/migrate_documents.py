@@ -1,5 +1,8 @@
 from pathlib import Path
-from src.database import container
+
+from src.database import get_container
+
+container = get_container("content")
 
 
 DOCS_DIR = Path(__file__).resolve().parent.parent / "data" / "documents"

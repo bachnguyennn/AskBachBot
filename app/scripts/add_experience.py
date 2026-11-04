@@ -1,4 +1,6 @@
-from src.database import container
+from src.database import get_container
+
+container = get_container("content")
 
 experience = {
     "id": "cmha-experience",

@@ -1,14 +1,16 @@
-from src.cosmos_retriever import retrieve_top_k_cosmos
-from src.bm25_retriever import bm25, retrieve_bm25
-from src.load_documents import load_chunks
+"""Hybrid retrieval: dense + BM25 candidates merged with Reciprocal Rank Fusion."""
 
-chunks = load_chunks()
+from functools import lru_cache
 
-def reciprocal_rank_fusion(dense_results, bm25_results, rrf_k=60):
+from src.bm25_retriever import build_bm25, retrieve_bm25
+
+
+def reciprocal_rank_fusion(*rankings, rrf_k=60):
+    """Merge ranked lists by summing 1 / (rrf_k + rank). Raw scores are ignored,
+    so cosine similarities and BM25 scores never need to be put on one scale."""
     rrf_scores = {}
     chunk_by_key = {}
-
-    for results in (dense_results, bm25_results):
+    for results in rankings:
         for rank, (chunk, _score) in enumerate(results, start=1):
             key = (chunk["source"], chunk["chunk_id"])
             chunk_by_key[key] = chunk
@@ -18,38 +20,35 @@ def reciprocal_rank_fusion(dense_results, bm25_results, rrf_k=60):
     return [(chunk_by_key[key], rrf_scores[key]) for key in ranked_keys]
 
 
+class HybridRetriever:
+    def __init__(self, chunks, dense_search):
+        """`dense_search(query, k)` returns [(chunk, score), ...]: Cosmos DB in
+        production, an in-memory index in the offline eval."""
+        self.chunks = chunks
+        self.bm25 = build_bm25(chunks)
+        self.dense_search = dense_search
+
+    def dense(self, query, k=10):
+        return self.dense_search(query, k)
+
+    def lexical(self, query, k=10):
+        return retrieve_bm25(query, self.chunks, self.bm25, k=k)
+
+    def retrieve(self, query, candidate_k=10, final_k=3, rrf_k=60):
+        fused = reciprocal_rank_fusion(
+            self.dense(query, candidate_k), self.lexical(query, candidate_k), rrf_k=rrf_k
+        )
+        return fused[:final_k] if final_k else fused
+
+
+@lru_cache(maxsize=1)
+def get_retriever():
+    """Production retriever. Built once per process: one Cosmos DB documents query."""
+    from src.dense_retriever import retrieve_dense_cosmos
+    from src.load_documents import load_chunks
+
+    return HybridRetriever(load_chunks(source="cosmos"), retrieve_dense_cosmos)
+
+
 def retrieve_hybrid(query, candidate_k=10, final_k=3, rrf_k=60):
-    dense_results = retrieve_top_k_cosmos(
-    query,
-    k=candidate_k
-    )
-    bm25_results = retrieve_bm25(query, chunks, bm25, k=candidate_k)
-    return reciprocal_rank_fusion(dense_results, bm25_results, rrf_k=rrf_k)[:final_k]
-
-
-if __name__ == "__main__":
-    candidate_k = 10
-    final_k = 3
-    rrf_k = 60
-
-    questions = [
-        "What is Bach researching?",
-        "What programming languages does Bach know?",
-    ]
-
-    for question in questions:
-        dense_results = retrieve_top_k_cosmos(question, k=candidate_k)
-        bm25_results = retrieve_bm25(question, chunks, bm25, k=candidate_k)
-        hybrid_results = reciprocal_rank_fusion(dense_results, bm25_results, rrf_k=rrf_k)
-
-        print(f"\n===== {question}")
-        for name, results, label in [
-            ("DENSE", dense_results, "cosine"),
-            ("BM25", bm25_results, "BM25 score"),
-            ("HYBRID RRF", hybrid_results, "RRF score"),
-        ]:
-            print(f"\n{name} TOP {final_k}")
-            print(f"{'rank':<5}| {'source':<14}| {'chunk_id':<9}| {label}")
-            for rank, (chunk, score) in enumerate(results[:final_k], start=1):
-                precision = 6 if name == "HYBRID RRF" else 4
-                print(f"{rank:<5}| {chunk['source']:<14}| {chunk['chunk_id']:<9}| {score:.{precision}f}")
+    return get_retriever().retrieve(query, candidate_k=candidate_k, final_k=final_k, rrf_k=rrf_k)
