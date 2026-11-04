@@ -668,7 +668,7 @@ response = answer_question("What Azure experience does Bach have?")
 | Dockerfile step | Detail |
 |---|---|
 | Base image | `python:3.12-slim` |
-| PyTorch | **CPU-only** wheel from the PyTorch index, installed first. The default Linux wheel bundles several GB of CUDA libraries this container never uses. |
+| PyTorch | **CPU-only** wheel from the PyTorch index, installed first. The default Linux wheel bundles several GB of CUDA libraries this container never uses; dropping them took the compressed image from 3.26 GB (v5) to about 0.6 GB. |
 | Dependencies | `requirements.txt` installed next, so the layer is cached when only code changes |
 | Embedding model | Downloaded at **build** time, with `HF_HUB_OFFLINE=1` at runtime, so a cold start doesn't hit Hugging Face |
 | Application | `app/src/` → `/app/src/` (documents come from Cosmos DB at runtime) |
@@ -786,7 +786,7 @@ Every one of these was hit in practice during the first deployment.
 | 3 | **Under-provisioned container** | At the initial 0.25 vCPU / 0.5 GiB, PyTorch + SentenceTransformers could not finish startup and the revision was marked unhealthy. | Increased to **1 vCPU / 2 GiB**. | Size containers for the model, not the web framework. Peak resident memory is about 600 MB after startup, plus import-time spikes. |
 | 4 | **Secret handling** | The API needs `GROQ_API_KEY` at runtime. | Stored as a Container Apps **secret** and referenced with `secretref`; it is never baked into the image or committed. | Images are artifacts that get copied and cached; secrets belong in the runtime. |
 | 5 | **Registry credentials** | The app needs to pull from a private registry. | A **user-assigned managed identity** with `AcrPull`, so there are no registry passwords in the app configuration. | Prefer identity-based access over shared keys. |
-| 6 | **Cold start** | The app scales to zero. A cold request took **32 s** (measured 2026-11-04, image v5): pulling a multi-GB CUDA-enabled image, downloading the model, then building the index. | Dockerfile now uses CPU-only PyTorch and bakes the model into the image; the index is built once in a startup warm-up. **Re-measure after the next deploy.** | `--min-replicas 1` would remove cold starts entirely but spends Azure credit around the clock. |
+| 6 | **Cold start** | The app scales to zero. A cold request took **32 s** (measured 2026-11-04, image v5): pulling a multi-GB CUDA-enabled image, downloading the model, then building the index. | Dockerfile now uses CPU-only PyTorch and bakes the model into the image: the linux/amd64 image shrank from **3.26 GB to about 0.6 GB** compressed (measured 2026-11-04). The index is built once in a startup warm-up. **Re-measure the cold start after the next deploy.** | `--min-replicas 1` would remove cold starts entirely but spends Azure credit around the clock. |
 
 ---
 
