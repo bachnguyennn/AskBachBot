@@ -1,8 +1,8 @@
 GRAMMARME ON-DEVICE WRITING ASSISTANT PROJECT — BACH NGUYEN
 
 GRAMMARME PROJECT: OVERVIEW
-Year: 2026 (November). Domain: developer tools / on-device NLP / browser software. Tools: TypeScript, React, Vite, Harper (open-source grammar engine) compiled to WebAssembly, Chrome Extension Manifest V3, Cloudflare Workers, Vitest. GitHub: github.com/bachnguyennn/GrammarMe. Live site: bachnguyennn.github.io/GrammarMe, with the web editor at bachnguyennn.github.io/GrammarMe/editor. Write-up: bachnguyennn.github.io/projects/grammarme.
-GrammarMe is a free, private, Grammarly-style writing assistant built solo by Bach. It underlines spelling, grammar and punctuation mistakes as you type, explains each one, and fixes it in one click. It comes as a web editor and a Chrome extension for text boxes on websites, including rich-text editors such as Gmail. Bach built everything around the Harper engine: the editor, the extension, the suggestion logic, the evaluation, and two optional AI routes.
+Year: 2026 (November). Domain: developer tools / on-device NLP / browser software. Tools: TypeScript, React, Vite, Harper (open-source grammar engine) compiled to WebAssembly, Chrome Extension Manifest V3, Vitest. GitHub: github.com/bachnguyennn/GrammarMe. Live site: bachnguyennn.github.io/GrammarMe, with the web editor at bachnguyennn.github.io/GrammarMe/editor. Write-up: bachnguyennn.github.io/projects/grammarme.
+GrammarMe is a free, private, Grammarly-style writing assistant built solo by Bach. It underlines spelling, grammar and punctuation mistakes as you type, explains each one, and fixes it in one click. It comes as a web editor and a Chrome extension for text boxes on websites, including rich-text editors such as Gmail. Bach built everything around the Harper engine: the editor, the extension, the suggestion logic, the evaluation, and an optional ChatGPT check.
 
 GRAMMARME PROJECT: THE PROBLEM AND DESIGN GOALS
 Most writing assistants send what you type to a server, and the good ones need a subscription. Bach set three hard limits for GrammarMe: text stays on the device by default, it costs $0 to run, and it stays light enough for an 8 GB laptop. A local rule engine cannot catch everything, so AI is available for the gaps, but it stays off until the user asks for it.
@@ -11,7 +11,7 @@ GRAMMARME PROJECT: ARCHITECTURE
 - Shared core: one TypeScript package holds the suggestion contract, the edit helpers, the Harper adapter, and the AI prompts and guards. The editor and the extension both build on it.
 - Web editor: React and Vite, with Harper in a Web Worker so loading the 20 MB WASM file never stalls typing. Checks run after a 300 ms debounce, and underlines shift instantly on each keystroke with no network.
 - Chrome extension: one Harper instance runs in an offscreen document and all tabs share it, instead of loading a copy per tab.
-- Optional AI: off by default and sent only on request. The web editor calls a Cloudflare Worker that the user deploys on their own free account. The extension can use the user's own ChatGPT Plus or Pro plan through a small local companion program, with no API key.
+- Optional AI: off by default and sent only on request. The extension can use the user's own ChatGPT Plus or Pro plan through a small local companion program, with no API key.
 
 GRAMMARME PROJECT: IMPLEMENTATION DECISIONS
 - Harper over LanguageTool: LanguageTool catches more, but it means either sending text to a third-party API or running a Java server that needs 1 to 2 GB of RAM. Bach accepted Harper's lower recall and left the gap to the optional AI check.
@@ -31,7 +31,7 @@ Before tuning, precision was 78.8% and 30.4% of correct sentences were flagged. 
 
 GRAMMARME PROJECT: LIMITATIONS
 Bach documents the limits openly. The dataset is small and he wrote it, so the numbers show how settings compare, not how the checker does on real writing. There is no side-by-side comparison with Grammarly, and AI suggestion quality is not measured yet. Without AI, about 3 in 10 errors in the dataset go unflagged, including agreement errors with a longer subject and tense that depends on context.
-The Chrome extension is a prototype: it installs by hand in Developer mode, works on desktop only, and does not support Google Docs. It is not on the Chrome Web Store. The ChatGPT route needs the companion on macOS or Linux and a Plus or Pro plan. When optional AI is used, text leaves the device: it goes to the user's own Worker and chosen model provider, or to OpenAI with the user's ChatGPT plan.
+The Chrome extension is a prototype: it installs by hand in Developer mode, works on desktop only, and does not support Google Docs. It is not on the Chrome Web Store. The ChatGPT route needs the companion on macOS or Linux and a Plus or Pro plan. When optional AI is used, text leaves the device: it goes to OpenAI with the user's ChatGPT plan.
 
 GRAMMARME PROJECT: QUICK FACTS (FOR COMMON QUESTIONS)
 - Is GrammarMe free? Yes. It costs $0 to run, with no subscriptions or paid APIs.
