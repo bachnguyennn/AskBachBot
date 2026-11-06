@@ -169,7 +169,7 @@ Groq API                        (openai/gpt-oss-120b, strict structured output)
 
 ## Request lifecycle: one question, end to end
 
-The trace below follows a real query from the 2026-10-06 evaluation run (33-chunk corpus). On today's 115-chunk corpus the hybrid top 3 for this question is unchanged: cmha c3, cmha c2, about c0.
+The trace below follows a real query from the 2026-10-06 evaluation run (33-chunk corpus). On today's 122-chunk corpus the hybrid top 3 for this question is unchanged: cmha c3, cmha c2, about c0.
 
 ```
 "What did Bach do at CMHA?"
@@ -397,7 +397,7 @@ ANSWER_SCHEMA = {
 |---|---|---|
 | Document | `load_documents` | `{"source": str, "text": str}` |
 | Chunk | `chunk_document` | `{"source": str, "chunk_id": int, "text": str}` |
-| Dense index | Cosmos DB `chunks` container (or `InMemoryDenseIndex`) | 115 × 384-d vectors |
+| Dense index | Cosmos DB `chunks` container (or `InMemoryDenseIndex`) | 122 × 384-d vectors |
 | BM25 index | `HybridRetriever` (built once, `get_retriever()`) | `BM25Okapi` over `list[list[str]]` |
 | Candidates | `HybridRetriever.dense`, `HybridRetriever.lexical` | `list[tuple[chunk, float]]`, length 10 |
 | Fused results | `retrieve_hybrid` | `list[tuple[chunk, float]]`, length 3 |
@@ -421,9 +421,9 @@ ANSWER_SCHEMA = {
 | `cmha.txt` | IT internship at CMHA Durham: overview, data management and reporting, IT support, lessons learned | 4 |
 | `education.txt` | Degree, coursework, certifications, thesis summary, TA role, campus leadership | 4 |
 | `projects.txt` | Index of all projects, Bach's methodology, projects grouped by topic | 5 |
-| `project_*.txt` (13 files) | One detailed document per project: Alpaca options agent, AstroLoc-ML, Benford fraud detection, chest X-ray, CViT-CPG, data engineering ETLs, energy forecasting, FastText, hospital readmission, MarketGuard, Nested Learning, Quant Research Terminal, xG betting | 77 |
+| `project_*.txt` (14 files) | One detailed document per project: Alpaca options agent, AstroLoc-ML, Benford fraud detection, chest X-ray, CViT-CPG, data engineering ETLs, energy forecasting, FastText, GrammarMe, hospital readmission, MarketGuard, Nested Learning, Quant Research Terminal, xG betting | 84 |
 | `research.txt` | Undergraduate thesis on continual learning for CascadedViT: the problem, why CViT, the research question (ongoing, results not yet public) | 4 |
-| **Total** | **≈ 90.7 KB of text, 21 documents** | **115** |
+| **Total** | **≈ 97.1 KB of text, 22 documents** | **122** |
 
 ### Authoring conventions
 
@@ -450,7 +450,7 @@ flowchart LR
 2. From `app/` (signed in with `az login`), upload it with `python -m scripts.migrate_documents`, then re-embed with `python -m scripts.index_chunks`. Order matters: `index_chunks` reads documents from Cosmos DB, not from disk.
 3. Check chunking with `python -m src.load_documents` and run `pytest`: `test_benchmark.py` fails if an eval label now points at a missing chunk.
 4. If chunk IDs moved, update the labels in `eval/benchmark.py`, re-run `python -m eval.retrieval_eval`, and compare against the [published results](#retrieval-evaluation).
-5. Restart the app (a new revision, or `az containerapp revision restart`) so it rebuilds its in-memory indexes. You don't need to rebuild the image just for a content change.
+5. Let the app rebuild its in-memory indexes. It rebuilds them on every start, and it scales to zero when idle, so if `az containerapp replica list -g $RG -n $APP --revision <latest>` is empty, the next question picks up the new content. `az containerapp revision restart` does not work here: Express environments reject it, and the CLI has no `az containerapp stop` or `start` (checked with azure-cli 2.90.0, containerapp 1.3.0b5). If replicas are running, wait for them to scale down or deploy a new revision. You don't need to rebuild the image just for a content change.
 
 > ⚠️ `migrate_documents` only **upserts**. If you delete or rename a `.txt` file, also delete its item from the `content` container, or the old document will keep being served. `index_chunks` then removes any chunk in `chunks` that no longer matches a current document chunk (stale chunks from shrunk, renamed or deleted documents). See [ADR 0001 → Updating content](adr/0001-move-knowledge-base-to-cosmos-db.md#updating-content).
 
@@ -499,7 +499,7 @@ cd app
 uvicorn src.api:app --reload --port 8000
 ```
 
-Startup takes a few seconds while the warm-up loads the model and builds the index; the log shows `warmup ok: 115 chunks in …s`. Then:
+Startup takes a few seconds while the warm-up loads the model and builds the index; the log shows `warmup ok: 122 chunks in …s`. Then:
 
 ```bash
 curl -s http://localhost:8000/
@@ -762,9 +762,9 @@ az containerapp update -g $RG -n $APP --image $ACR.azurecr.io/$APP:$TAG
 
 ```bash
 az containerapp secret set -g $RG -n $APP --secrets groq-api-key="$NEW_GROQ_KEY"
-az containerapp revision restart -g $RG -n $APP \
-  --revision $(az containerapp show -g $RG -n $APP --query properties.latestRevisionName -o tsv)
 ```
+
+The running replica keeps the old key until it restarts. Express environments reject `az containerapp revision restart`, so let the app scale to zero or deploy a new revision.
 
 **Inspecting a failing revision:**
 
@@ -816,7 +816,11 @@ It measures *question → retriever → top-3 evidence* for Dense, BM25 and Hybr
 
 | Metric | Dense | BM25 | Hybrid |
 |---|---|---|---|
-| **v2: 2026-11-04, 21 documents / 115 chunks** | | | |
+| **v2: 2026-11-05, 22 documents / 122 chunks** | | | |
+| Recall@3 | **10/10** | **10/10** | **10/10** |
+| Precision@3 | 53% (16/30) | **67%** (20/30) | 60% (18/30) |
+| MRR@3 | 0.883 | 0.833 | **0.933** |
+| *v2: 2026-11-04, 21 documents / 115 chunks* | | | |
 | Recall@3 | 8/10 | 9/10 | **10/10** |
 | Precision@3 | 47% (14/30) | **63%** (19/30) | 60% (18/30) |
 | MRR@3 | 0.750 | 0.800 | **0.883** |
@@ -831,7 +835,7 @@ It measures *question → retriever → top-3 evidence* for Dense, BM25 and Hybr
 
 > **The evaluation set is small (n = 10) and written by the corpus author. It is a regression check, not evidence of general retrieval quality.**
 
-- **Hybrid is the only system that finds evidence for every question**, and it has the best MRR. BM25 still has slightly better precision, so hybrid vs BM25 remains close.
+- **All three systems now find evidence for every question**, and hybrid has the best MRR. Dense only reached 10/10 after the `about.txt` skills line was reworded (experiment 14), and BM25 still has slightly better precision, so hybrid vs BM25 remains close.
 - **Growing the corpus 3.5× cost precision and ranking quality** (Hybrid P@3 70% → 60%, MRR 0.950 → 0.883): more chunks compete for the same three slots.
 - **"What is Bach researching?" is still the weak spot.** Every system passes only through the `about.txt` summary; no `research.txt` chunk reaches the top 3 even after the rewrite. `QUICK FACTS` hub chunks (`education.txt` c3, `about.txt` c4) take the top slots, and BM25 has no stemming (`researching` ≠ `research`). The paraphrase *"What topic is Bach's undergraduate thesis focused on?"* does retrieve `research.txt` c3.
 - **The paraphrases are easier than real user questions.** Several reuse document wording.
@@ -871,6 +875,7 @@ Each step changed **one variable** and was measured before moving on.
 | 11 | Dense retrieval on Cosmos DB vector search (`flat` index) | Identical top 3 and scores to in-memory search on all 10 frozen benchmark questions. The vector store changed nothing about retrieval quality; see the [parity check](#cosmos-db-parity-check). |
 | 12 | Corpus grew to 21 docs / 115 chunks; benchmark re-labelled (v2) | Hybrid still 10/10 recall; precision 70% → 60%, MRR 0.950 → 0.883. Research question still relies on the `about.txt` summary. |
 | 13 | Eval as a CI gate | The offline backend matches Cosmos DB exactly, so CI runs it on every push and fails below the current Hybrid scores. |
+| 14 | Added `project_grammarme.txt` (22 docs / 122 chunks) | The gate failed: "Which coding languages can Bach use?" fell to 9/10 recall, because `about.txt` chunk 2 sat at dense rank 10 and the new chunks pushed it out. Any new document would have done the same. Rewording its skills line to "Programming languages Bach uses:" (and adding TypeScript) restored 10/10 and raised MRR to 0.933. That edit was made after seeing the failing question, so the gain is not a clean improvement measurement. |
 
 ---
 
@@ -884,7 +889,7 @@ Each step changed **one variable** and was measured before moving on.
 
 **Candidate depth ≠ context size.** Searching 10 deep but sending 3 chunks lets fusion rescue evidence ranked 4–5 without inflating the prompt.
 
-**Knowledge base and dense search in Cosmos DB.** At this corpus size (33 chunks at the time, 115 now), a vector store doesn't improve retrieval *quality*, because brute-force search is already exact. The move to Cosmos DB is about *operations*: content edits without image rebuilds, and no re-embedding of the corpus on every cold start. Cosmos DB's `flat` vector index keeps search exact, and the [parity check](#cosmos-db-parity-check) confirmed identical results. Full reasoning and the alternatives considered (Azure AI Search, Blob Storage, pgvector) are in [ADR 0001](adr/0001-move-knowledge-base-to-cosmos-db.md).
+**Knowledge base and dense search in Cosmos DB.** At this corpus size (33 chunks at the time, 122 now), a vector store doesn't improve retrieval *quality*, because brute-force search is already exact. The move to Cosmos DB is about *operations*: content edits without image rebuilds, and no re-embedding of the corpus on every cold start. Cosmos DB's `flat` vector index keeps search exact, and the [parity check](#cosmos-db-parity-check) confirmed identical results. Full reasoning and the alternatives considered (Azure AI Search, Blob Storage, pgvector) are in [ADR 0001](adr/0001-move-knowledge-base-to-cosmos-db.md).
 
 **Configuration from the environment.** The application reads `GROQ_API_KEY` from the process environment. A `.env` file is only a local-development convenience, loaded from one documented location.
 
@@ -912,7 +917,7 @@ Each step changed **one variable** and was measured before moving on.
 
 | Metric | Observed |
 |---|---|
-| Corpus | 21 documents, 115 chunks, about 90.7 KB |
+| Corpus | 22 documents, 122 chunks, about 97.1 KB |
 | Retrieval latency | Milliseconds |
 | End-to-end latency | 0.4–1.3 s per question, dominated by the Groq call |
 | Peak memory after startup | About 600 MB (measured locally); production allocation is 2 GiB |

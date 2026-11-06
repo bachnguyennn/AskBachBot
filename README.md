@@ -47,15 +47,15 @@ flowchart LR
 
 ## Results
 
-Retrieval on a 10-question benchmark (5 questions + 5 paraphrases) over 115 chunks from 21 documents. Higher is better.
+Retrieval on a 10-question benchmark (5 questions + 5 paraphrases) over 122 chunks from 22 documents. Higher is better.
 
 | | Dense only | Keyword (BM25) only | **Hybrid** |
 |---|---|---|---|
-| Found useful evidence in the top 3 (Recall@3) | 8/10 | 9/10 | **10/10** |
-| Share of the top 3 that is relevant (Precision@3) | 47% | **63%** | 60% |
-| How early the first good passage appears (MRR@3) | 0.750 | 0.800 | **0.883** |
+| Found useful evidence in the top 3 (Recall@3) | **10/10** | **10/10** | **10/10** |
+| Share of the top 3 that is relevant (Precision@3) | 53% | **67%** | 60% |
+| How early the first good passage appears (MRR@3) | 0.883 | 0.833 | **0.933** |
 
-In plain terms: hybrid retrieval is the only setup that finds supporting evidence for every test question, and it ranks that evidence highest. The benchmark is small and I wrote it myself, so treat it as a regression check, not proof of general quality. The [full evaluation](docs/technical-deep-dive.md#evaluation) covers its limits and the one question it still struggles with.
+In plain terms: all three setups find supporting evidence for every test question, and hybrid ranks it highest. The benchmark is small and I wrote it myself, so treat it as a regression check, not proof of general quality. The [full evaluation](docs/technical-deep-dive.md#evaluation) covers its limits and the one question it still struggles with.
 
 ## Run it locally
 

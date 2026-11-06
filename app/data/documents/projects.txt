@@ -2,7 +2,7 @@ PROJECTS OVERVIEW — BACH NGUYEN
 
 OVERVIEW OF BACH'S PROJECTS
 This document is the index of Bach Nguyen's personal, academic, and research projects in machine learning, deep learning, LLM applications, quantitative finance, data science, and data engineering. All code is on GitHub at github.com/bachnguyennn, and longer write-ups are on the portfolio at bachnguyennn.github.io/projects. Each project has its own detailed document.
-Bach has built 18+ projects since 2024, ranging from ETL pipelines, streaming data pipelines, and data analysis, through clinical and medical machine learning, time-series forecasting, and NLP, to continual-learning research on vision transformers, a deployed RAG chatbot, and an autonomous options-trading agent.
+Bach has built 18+ projects since 2024, ranging from ETL pipelines, streaming data pipelines, and data analysis, through clinical and medical machine learning, time-series forecasting, and NLP, to continual-learning research on vision transformers, a deployed RAG chatbot, an on-device writing assistant, and an autonomous options-trading agent.
 
 BACH'S APPROACH: HONEST METHODOLOGY OVER FLATTERING NUMBERS
 A theme across Bach's projects is honest methodology over flattering numbers. Bach:
@@ -14,6 +14,7 @@ A theme across Bach's projects is honest methodology over flattering numbers. Ba
 
 BACH'S MACHINE LEARNING AND AI PROJECTS (LIST)
 - Ask Bach (2026): cloud-native RAG chatbot on the portfolio, hybrid BM25 + vector search on Azure.
+- GrammarMe (2026): free, private Grammarly-style writing assistant, with Harper checks running on-device in WebAssembly, a web editor, and a Chrome extension that works in Gmail.
 - CViT-CPG continual learning (2026): zero-forgetting continual learning on CascadedViT vision transformers.
 - Nested Learning / HOPE (2025-2026) and Nested Learning Vision (2026): continual-learning language and vision models.
 - Chest X-Ray Pneumonia Detection (2025): ResNet50 with Grad-CAM, 96.9% recall.
@@ -35,12 +36,13 @@ Data engineering and data analysis projects:
 - Azure data pipelines for Statistics Without Borders (2024), described in azure.txt.
 
 BACH'S PROJECTS GROUPED BY TOPIC
-- Selected projects on the portfolio home page: Ask Bach, Hospital Readmission Risk Model, Chest X-Ray Pneumonia Detection, Electricity Load Forecasting.
-- LLM, RAG, and AI agents: Ask Bach, Alpaca Options Agent (Claude and MCP).
+- Selected projects on the portfolio home page: Ask Bach, MarketGuard, CascadedViT continual learning, GrammarMe.
+- LLM, RAG, and AI agents: Ask Bach, Alpaca Options Agent (Claude and MCP), GrammarMe (optional AI checks).
 - Healthcare and medical ML: Hospital Readmission, Chest X-Ray Pneumonia Detection.
 - Computer vision and deep learning: Chest X-Ray (ResNet50), AstroLoc-ML (EfficientNet), CViT-CPG, Nested Learning Vision.
 - Continual learning: CViT-CPG, Nested Learning, Nested Learning Vision, thesis research.
-- NLP: FastText embeddings, Nested Learning language models, Ask Bach.
+- NLP: FastText embeddings, Nested Learning language models, Ask Bach, GrammarMe.
+- Browser software and developer tools: GrammarMe (WebAssembly, Chrome extension).
 - Finance and quant: Alpaca agent, Quant Research Terminal, Benford fraud, xG betting.
 - Cloud and deployment: Ask Bach (Docker, Azure Container Apps, Cosmos DB), MarketGuard (Azure Container Apps, Blob Storage, GitHub Actions).
 - Data engineering: MarketGuard streaming pipeline (Kafka, Spark, Delta Lake), GDP, Banks, and Used Car ETL pipelines, Ontario analysis.

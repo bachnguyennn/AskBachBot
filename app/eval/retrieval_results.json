@@ -9,19 +9,19 @@
   },
   "summary": {
     "Dense": {
-      "recall": 0.8,
-      "precision": 0.4666666666666667,
-      "mrr": 0.75
+      "recall": 1.0,
+      "precision": 0.5333333333333333,
+      "mrr": 0.8833333333333334
     },
     "BM25": {
-      "recall": 0.9,
-      "precision": 0.6333333333333333,
-      "mrr": 0.8
+      "recall": 1.0,
+      "precision": 0.6666666666666666,
+      "mrr": 0.8333333333333334
     },
     "Hybrid": {
       "recall": 1.0,
       "precision": 0.6,
-      "mrr": 0.8833333333333334
+      "mrr": 0.9333333333333333
     }
   },
   "results": [
@@ -62,19 +62,19 @@
             {
               "source": "cmha.txt",
               "chunk_id": 3,
-              "score": 7.6501,
+              "score": 7.7527,
               "relevant": true
             },
             {
               "source": "cmha.txt",
               "chunk_id": 2,
-              "score": 7.1898,
+              "score": 7.3057,
               "relevant": true
             },
             {
               "source": "cmha.txt",
               "chunk_id": 0,
-              "score": 6.6984,
+              "score": 6.8057,
               "relevant": true
             }
           ]
@@ -93,7 +93,7 @@
             {
               "source": "cmha.txt",
               "chunk_id": 2,
-              "score": 0.0308,
+              "score": 0.0306,
               "relevant": true
             },
             {
@@ -143,19 +143,19 @@
             {
               "source": "azure.txt",
               "chunk_id": 2,
-              "score": 7.8999,
+              "score": 8.1685,
               "relevant": true
             },
             {
               "source": "azure.txt",
               "chunk_id": 0,
-              "score": 7.2097,
+              "score": 7.4614,
               "relevant": true
             },
             {
               "source": "azure.txt",
               "chunk_id": 1,
-              "score": 6.5497,
+              "score": 6.782,
               "relevant": true
             }
           ]
@@ -224,19 +224,19 @@
             {
               "source": "about.txt",
               "chunk_id": 1,
-              "score": 4.3125,
+              "score": 4.3936,
               "relevant": true
             },
             {
               "source": "education.txt",
               "chunk_id": 3,
-              "score": 1.9611,
+              "score": 1.9886,
               "relevant": false
             },
             {
               "source": "ask_bach.txt",
               "chunk_id": 0,
-              "score": 1.9514,
+              "score": 1.9791,
               "relevant": false
             }
           ]
@@ -305,19 +305,19 @@
             {
               "source": "about.txt",
               "chunk_id": 4,
-              "score": 6.4688,
+              "score": 6.587,
               "relevant": false
             },
             {
               "source": "education.txt",
               "chunk_id": 3,
-              "score": 6.2667,
+              "score": 6.3821,
               "relevant": true
             },
             {
               "source": "about.txt",
               "chunk_id": 0,
-              "score": 4.8101,
+              "score": 4.9042,
               "relevant": true
             }
           ]
@@ -354,10 +354,16 @@
       "variant": "original",
       "systems": {
         "Dense": {
-          "hit": false,
-          "relevant_in_top_k": 0,
-          "reciprocal_rank": 0.0,
+          "hit": true,
+          "relevant_in_top_k": 1,
+          "reciprocal_rank": 1.0,
           "top_k": [
+            {
+              "source": "about.txt",
+              "chunk_id": 2,
+              "score": 0.5157,
+              "relevant": true
+            },
             {
               "source": "about.txt",
               "chunk_id": 0,
@@ -368,12 +374,6 @@
               "source": "education.txt",
               "chunk_id": 3,
               "score": 0.4797,
-              "relevant": false
-            },
-            {
-              "source": "about.txt",
-              "chunk_id": 4,
-              "score": 0.4313,
               "relevant": false
             }
           ]
@@ -386,19 +386,19 @@
             {
               "source": "about.txt",
               "chunk_id": 2,
-              "score": 9.315,
+              "score": 9.7763,
               "relevant": true
             },
             {
               "source": "azure.txt",
               "chunk_id": 2,
-              "score": 5.5051,
+              "score": 5.6022,
               "relevant": false
             },
             {
               "source": "education.txt",
               "chunk_id": 3,
-              "score": 1.9611,
+              "score": 1.9886,
               "relevant": false
             }
           ]
@@ -406,24 +406,24 @@
         "Hybrid": {
           "hit": true,
           "relevant_in_top_k": 1,
-          "reciprocal_rank": 0.5,
+          "reciprocal_rank": 1.0,
           "top_k": [
+            {
+              "source": "about.txt",
+              "chunk_id": 2,
+              "score": 0.0328,
+              "relevant": true
+            },
             {
               "source": "education.txt",
               "chunk_id": 3,
-              "score": 0.032,
+              "score": 0.0317,
               "relevant": false
             },
             {
               "source": "about.txt",
-              "chunk_id": 2,
-              "score": 0.0318,
-              "relevant": true
-            },
-            {
-              "source": "about.txt",
-              "chunk_id": 4,
-              "score": 0.0313,
+              "chunk_id": 0,
+              "score": 0.0308,
               "relevant": false
             }
           ]
@@ -467,19 +467,19 @@
             {
               "source": "cmha.txt",
               "chunk_id": 0,
-              "score": 23.6524,
+              "score": 24.1306,
               "relevant": true
             },
             {
               "source": "cmha.txt",
               "chunk_id": 3,
-              "score": 21.3392,
+              "score": 21.7654,
               "relevant": true
             },
             {
               "source": "cmha.txt",
               "chunk_id": 2,
-              "score": 16.8471,
+              "score": 17.1554,
               "relevant": true
             }
           ]
@@ -541,27 +541,27 @@
           ]
         },
         "BM25": {
-          "hit": false,
-          "relevant_in_top_k": 0,
-          "reciprocal_rank": 0.0,
+          "hit": true,
+          "relevant_in_top_k": 1,
+          "reciprocal_rank": 0.3333333333333333,
           "top_k": [
             {
               "source": "ask_bach.txt",
               "chunk_id": 11,
-              "score": 6.8947,
+              "score": 7.0674,
               "relevant": false
             },
             {
               "source": "research.txt",
               "chunk_id": 2,
-              "score": 6.8146,
+              "score": 6.9228,
               "relevant": false
             },
             {
-              "source": "research.txt",
-              "chunk_id": 3,
-              "score": 6.7526,
-              "relevant": false
+              "source": "about.txt",
+              "chunk_id": 0,
+              "score": 6.8717,
+              "relevant": true
             }
           ]
         },
@@ -573,7 +573,7 @@
             {
               "source": "about.txt",
               "chunk_id": 0,
-              "score": 0.032,
+              "score": 0.0323,
               "relevant": true
             },
             {
@@ -629,19 +629,19 @@
             {
               "source": "research.txt",
               "chunk_id": 3,
-              "score": 9.8863,
+              "score": 10.127,
               "relevant": true
             },
             {
               "source": "research.txt",
               "chunk_id": 0,
-              "score": 9.1449,
+              "score": 9.3863,
               "relevant": true
             },
             {
               "source": "education.txt",
               "chunk_id": 1,
-              "score": 8.616,
+              "score": 8.8442,
               "relevant": true
             }
           ]
@@ -660,13 +660,13 @@
             {
               "source": "about.txt",
               "chunk_id": 0,
-              "score": 0.031,
+              "score": 0.0313,
               "relevant": true
             },
             {
-              "source": "about.txt",
-              "chunk_id": 3,
-              "score": 0.0297,
+              "source": "projects.txt",
+              "chunk_id": 4,
+              "score": 0.0305,
               "relevant": false
             }
           ]
@@ -710,19 +710,19 @@
             {
               "source": "education.txt",
               "chunk_id": 3,
-              "score": 7.8475,
+              "score": 8.0517,
               "relevant": true
             },
             {
               "source": "project_data_engineering.txt",
               "chunk_id": 4,
-              "score": 7.7323,
+              "score": 7.9052,
               "relevant": false
             },
             {
               "source": "education.txt",
               "chunk_id": 0,
-              "score": 7.0764,
+              "score": 7.2757,
               "relevant": true
             }
           ]
@@ -759,27 +759,27 @@
       "variant": "paraphrase",
       "systems": {
         "Dense": {
-          "hit": false,
-          "relevant_in_top_k": 0,
-          "reciprocal_rank": 0.0,
+          "hit": true,
+          "relevant_in_top_k": 1,
+          "reciprocal_rank": 0.3333333333333333,
           "top_k": [
             {
-              "source": "projects.txt",
+              "source": "project_grammarme.txt",
               "chunk_id": 0,
-              "score": 0.4428,
+              "score": 0.5069,
+              "relevant": false
+            },
+            {
+              "source": "project_grammarme.txt",
+              "chunk_id": 1,
+              "score": 0.4923,
               "relevant": false
             },
             {
               "source": "about.txt",
-              "chunk_id": 0,
-              "score": 0.4399,
-              "relevant": false
-            },
-            {
-              "source": "education.txt",
-              "chunk_id": 3,
-              "score": 0.3994,
-              "relevant": false
+              "chunk_id": 2,
+              "score": 0.4818,
+              "relevant": true
             }
           ]
         },
@@ -791,19 +791,19 @@
             {
               "source": "project_fasttext.txt",
               "chunk_id": 0,
-              "score": 6.0222,
+              "score": 5.8154,
               "relevant": false
             },
             {
               "source": "about.txt",
               "chunk_id": 2,
-              "score": 5.1147,
+              "score": 5.5519,
               "relevant": true
             },
             {
-              "source": "project_cpg_cascadedvit.txt",
-              "chunk_id": 10,
-              "score": 4.6144,
+              "source": "project_grammarme.txt",
+              "chunk_id": 2,
+              "score": 4.8653,
               "relevant": false
             }
           ]
@@ -816,19 +816,19 @@
             {
               "source": "about.txt",
               "chunk_id": 2,
-              "score": 0.0306,
+              "score": 0.032,
               "relevant": true
             },
             {
-              "source": "ask_bach.txt",
-              "chunk_id": 0,
+              "source": "project_grammarme.txt",
+              "chunk_id": 6,
               "score": 0.0303,
               "relevant": false
             },
             {
-              "source": "projects.txt",
+              "source": "ask_bach.txt",
               "chunk_id": 0,
-              "score": 0.0164,
+              "score": 0.029,
               "relevant": false
             }
           ]

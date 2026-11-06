@@ -28,7 +28,7 @@ EXPERIENCE SUMMARY (MOST RECENT FIRST)
 
 TECHNICAL SKILLS
 
-Programming languages: Python, SQL, Java, C++, Bash
+Programming languages Bach uses: Python, SQL, TypeScript, Java, C++, Bash
 Machine learning and deep learning: PyTorch, scikit-learn, XGBoost, LightGBM, SHAP, Optuna, vision transformers, CNNs (ResNet, EfficientNet), LSTM, time-series forecasting, continual learning
 Data analysis: pandas, NumPy, SciPy, Matplotlib, Seaborn, Folium, Jupyter, Microsoft Excel, Power Query
 Data engineering: ETL pipelines, Apache Airflow, Docker, web scraping (BeautifulSoup)

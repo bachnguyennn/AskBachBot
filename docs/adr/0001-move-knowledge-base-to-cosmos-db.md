@@ -7,7 +7,7 @@
 
 ## Context
 
-*Numbers in this section describe the corpus when the decision was made (6 documents, 33 chunks). It has since grown to 21 documents and 115 chunks.*
+*Numbers in this section describe the corpus when the decision was made (6 documents, 33 chunks). It has since grown to 22 documents and 122 chunks.*
 
 Until this change, the six profile documents in `app/data/documents/*.txt` were **baked into the Docker image** and read from disk at startup. Both indexes (dense MiniLM and BM25) were rebuilt in memory on every container start. The README's earlier position was that a vector database "would add a service and a sync problem without improving quality" at 33 chunks.
 
